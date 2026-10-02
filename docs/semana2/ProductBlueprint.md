@@ -79,7 +79,7 @@ Concentrar el MVP en las cubetas de huevos permite probar la hipótesis central 
 
 Lienzo de una página con el modelo de negocio simplificado de AgroTrace Rural:
 
-**Enlace al Lean Canvas (obligatorio):** [Lean Canvas AgroTrace Rural](https://github.com/alucart2005/AgroTrace_Guarumo/blob/main/docs/semana2/LeanCanvas.png)
+**Enlace al Lean Canvas (obligatorio):** [Lean Canvas AgroTrace Rural](https://github.com/users/alucart2005/projects/16)
 
 ---
 
@@ -221,7 +221,7 @@ Focusing the MVP on egg crates lets us test the core business hypothesis —that
 
 One-page canvas with the simplified business model of AgroTrace Rural:
 
-**Lean Canvas link (required):** [Lean Canvas AgroTrace Rural](https://github.com/alucart2005/AgroTrace_Guarumo/blob/main/docs/semana2/LeanCanvas.png)
+**Lean Canvas link (required):** [Lean Canvas AgroTrace Rural](https://github.com/users/alucart2005/projects/16)
 
 ---
 
@@ -363,7 +363,7 @@ Concentrar o MVP nas caixas de ovos permite testar a hipótese central do negóc
 
 Canvas de uma página com o modelo de negócio simplificado do AgroTrace Rural:
 
-**Link do Lean Canvas (obrigatório):** [Lean Canvas AgroTrace Rural](https://github.com/alucart2005/AgroTrace_Guarumo/blob/main/docs/semana2/LeanCanvas.png)
+**Link do Lean Canvas (obrigatório):** [Lean Canvas AgroTrace Rural](https://github.com/users/alucart2005/projects/16)
 
 ---
 
