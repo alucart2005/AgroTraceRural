@@ -49,7 +49,8 @@ El corazón del proyecto es la plataforma **AgroTrace**, un sistema de registros
 11. [📈 Indicadores y metas](#-indicadores-y-metas)
 12. [⚠️ Supuestos y riesgos](#-supuestos-y-riesgos)
 13. [📋 Requisitos regulatorios](#-requisitos-regulatorios)
-14. [🌱 Visión](#-visión)
+14. [🚀 Cómo ejecutar](#-cómo-ejecutar-el-proyecto)
+15. [🌱 Visión](#-visión)
 
 ---
 
@@ -327,6 +328,25 @@ La plataforma **no reemplaza** los registros oficiales: es una **capa tecnológi
 
 ---
 
+### 🚀 Cómo ejecutar el proyecto
+
+**Requisitos:** Node.js 20+ · Git · (opcional) Python 3.11+ para el backend FastAPI.
+
+```bash
+git clone https://github.com/alucart2005/AgroTraceRural.git
+cd AgroTraceRural/frontend
+npm install
+npm run dev        # abre http://localhost:3000
+```
+
+- **Modo demo (por defecto):** sin backend configurado, el frontend usa datos de ejemplo en el navegador. Recorre el flujo completo: `/productor/nuevo` (HU-01) → etiqueta QR (HU-04) → `/lote/HUE-2027-001` con verificación on-chain (HU-03).
+- **Con backend:** copia `frontend/.env.example` a `frontend/.env.local` y define `NEXT_PUBLIC_API_URL` (FastAPI) y `NEXT_PUBLIC_SITE_URL`.
+- **Build de producción:** `npm run build && npm run start` dentro de `frontend/`.
+- **Despliegue en Vercel:** importa el repo → **Root Directory: `frontend`** → Framework Next.js (auto-detectado) → agrega las env vars → Deploy.
+- **Documentación:** [`docs/semana3/Documentacion.md`](docs/semana3/Documentacion.md) (cómo funciona el front) · [`docs/semana3/StellarContratos.md`](docs/semana3/StellarContratos.md) (ventajas del ecosistema Stellar).
+
+---
+
 ### 🌱 Visión
 
 > **Convertir una finca de 6 hectáreas de Guarumo en un modelo demostrativo de producción agropecuaria diversificada, comercialización directa y trazabilidad verificable, utilizando tecnología para aumentar la confianza del consumidor y mejorar la gestión del productor.**
@@ -375,7 +395,8 @@ At the core of the project is the **AgroTrace** platform, a digital record syste
 11. [📈 Indicators and goals](#-indicators-and-goals)
 12. [⚠️ Assumptions and risks](#-assumptions-and-risks)
 13. [📋 Regulatory requirements](#-regulatory-requirements)
-14. [🌱 Vision](#-vision)
+14. [🚀 How to run](#-how-to-run-the-project)
+15. [🌱 Vision](#-vision)
 
 ---
 
@@ -653,6 +674,25 @@ The platform **does not replace** official records: it is a **complementary tech
 
 ---
 
+### 🚀 How to run the project
+
+**Requirements:** Node.js 20+ · Git · (optional) Python 3.11+ for the FastAPI backend.
+
+```bash
+git clone https://github.com/alucart2005/AgroTraceRural.git
+cd AgroTraceRural/frontend
+npm install
+npm run dev        # open http://localhost:3000
+```
+
+- **Demo mode (default):** with no backend configured, the frontend uses sample data in the browser. Walk the full flow: `/productor/nuevo` (HU-01) → QR label (HU-04) → `/lote/HUE-2027-001` with on-chain verification (HU-03).
+- **With a backend:** copy `frontend/.env.example` to `frontend/.env.local` and set `NEXT_PUBLIC_API_URL` (FastAPI) and `NEXT_PUBLIC_SITE_URL`.
+- **Production build:** `npm run build && npm run start` inside `frontend/`.
+- **Vercel deployment:** import the repo → **Root Directory: `frontend`** → Next.js framework (auto-detected) → add env vars → Deploy.
+- **Documentation:** [`docs/semana3/Documentacion.md`](docs/semana3/Documentacion.md) (how the frontend works) · [`docs/semana3/StellarContratos.md`](docs/semana3/StellarContratos.md) (Stellar ecosystem advantages).
+
+---
+
 ### 🌱 Vision
 
 > **Turning a 6-hectare farm in Guarumo into a demonstrative model of diversified agricultural production, direct sales and verifiable traceability, using technology to increase consumer confidence and improve the producer's management.**
@@ -701,7 +741,8 @@ No centro do projeto está a plataforma **AgroTrace**, um sistema de registros d
 11. [📈 Indicadores e metas](#-indicadores-e-metas)
 12. [⚠️ Premissas e riscos](#-premissas-e-riscos)
 13. [📋 Requisitos regulatórios](#-requisitos-regulatórios)
-14. [🌱 Visão](#-visão)
+14. [🚀 Como executar](#-como-executar-o-projeto)
+15. [🌱 Visão](#-visão)
 
 ---
 
@@ -976,6 +1017,25 @@ A hipótese ficaria invalidada se um banco de dados tradicional ou uma integraç
 Antes de adquirir animais e operar comercialmente, deve-se verificar a situação do predio junto ao **ICA** e as obrigações sanitárias de cada espécie (Registro Sanitário de Predio Pecuario, rastreabilidade bovina, guias de movimentação, licenças ambientais, entre outros).
 
 A plataforma **não substitui** os registros oficiais: é uma **camada tecnológica complementar**.
+
+---
+
+### 🚀 Como executar o projeto
+
+**Requisitos:** Node.js 20+ · Git · (opcional) Python 3.11+ para o backend FastAPI.
+
+```bash
+git clone https://github.com/alucart2005/AgroTraceRural.git
+cd AgroTraceRural/frontend
+npm install
+npm run dev        # abra http://localhost:3000
+```
+
+- **Modo demo (padrão):** sem backend configurado, o frontend usa dados de exemplo no navegador. Percorra o fluxo completo: `/productor/nuevo` (HU-01) → etiqueta QR (HU-04) → `/lote/HUE-2027-001` com verificação on-chain (HU-03).
+- **Com backend:** copie `frontend/.env.example` para `frontend/.env.local` e defina `NEXT_PUBLIC_API_URL` (FastAPI) e `NEXT_PUBLIC_SITE_URL`.
+- **Build de produção:** `npm run build && npm run start` dentro de `frontend/`.
+- **Implantação no Vercel:** importe o repo → **Root Directory: `frontend`** → framework Next.js (detectado automaticamente) → adicione as env vars → Deploy.
+- **Documentação:** [`docs/semana3/Documentacion.md`](docs/semana3/Documentacion.md) (como funciona o frontend) · [`docs/semana3/StellarContratos.md`](docs/semana3/StellarContratos.md) (vantagens do ecossistema Stellar).
 
 ---
 

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Evidencia demo: galpón de la Finca Guarumo">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#bfe3c8"/>
+      <stop offset="100%" stop-color="#eef6e8"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#sky)"/>
+  <circle cx="660" cy="90" r="46" fill="#f6d365"/>
+  <path d="M0 340 L200 240 L360 320 L520 210 L800 330 L800 500 L0 500 Z" fill="#7cb342" opacity="0.55"/>
+  <path d="M0 400 L180 330 L400 410 L620 320 L800 400 L800 500 L0 500 Z" fill="#558b2f" opacity="0.65"/>
+  <rect x="250" y="250" width="300" height="150" rx="8" fill="#8d6e63"/>
+  <path d="M230 250 L400 170 L570 250 Z" fill="#6d4c41"/>
+  <rect x="380" y="320" width="40" height="80" fill="#4e342e"/>
+  <rect x="290" y="290" width="40" height="40" fill="#fff3e0" opacity="0.9"/>
+  <rect x="470" y="290" width="40" height="40" fill="#fff3e0" opacity="0.9"/>
+  <text x="400" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1b5e20">Finca Guarumo · evidencia de cosecha (demo)</text>
+</svg>
