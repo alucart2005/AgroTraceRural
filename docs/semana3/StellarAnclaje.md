@@ -18,6 +18,15 @@
 
 El MVP **no usa contratos inteligentes**. Siguiendo `docs/semana2/ProductBlueprint.md` §8, la huella SHA-256 de cada lote se registra en el campo **Memo Hash (32 bytes)** de una transacción normal en **Stellar Testnet**.
 
+**Opción de contratos (A o B):**
+
+| Opción | Qué es | Estado |
+| :--- | :--- | :--- |
+| **A** | Contratos inteligentes en Stellar (Soroban) | Descartada para el MVP |
+| **B** | Transacción clásica + Memo Hash (32 bytes) | ✅ **Elegida** |
+
+*Por qué elegimos la Opción B:* el MVP solo necesita probar que la huella existió (sin lógica on-chain); cuesta ≈ 0,00001 XLM por lote y no exige mantener un contrato Rust/Wasm. *Por qué no la Opción A todavía:* un contrato sería sobreingeniería hasta que existan reglas de negocio automáticas (ver `StellarContratos.md` §3–4). **Fotos y videos jamás van en blockchain** — solo el hash.
+
 | Componente | Decisión |
 | :--- | :--- |
 | Red | Stellar **Testnet** (`Test SDF Network ; September 2015`) |
@@ -129,6 +138,15 @@ python -m pytest tests/ -v
 
 The MVP **does not use smart contracts**. Following `docs/semana2/ProductBlueprint.md` §8, each batch's SHA-256 fingerprint is recorded in the **Memo Hash field (32 bytes)** of a regular transaction on **Stellar Testnet**.
 
+**Contract option (A or B):**
+
+| Option | What it is | Status |
+| :--- | :--- | :--- |
+| **A** | Smart contracts on Stellar (Soroban) | Discarded for the MVP |
+| **B** | Classic transaction + Memo Hash (32 bytes) | ✅ **Chosen** |
+
+*Why we chose Option B:* the MVP only needs to prove the fingerprint existed (no on-chain logic); it costs ≈ 0.00001 XLM per batch and requires no Rust/Wasm contract maintenance. *Why not Option A yet:* a contract would be over-engineering until automatic business rules exist (see `StellarContratos.md` §3–4). **Photos and videos never go on blockchain** — only the hash.
+
 | Component | Decision |
 | :--- | :--- |
 | Network | Stellar **Testnet** (`Test SDF Network ; September 2015`) |
@@ -239,6 +257,15 @@ python -m pytest tests/ -v
 ### 🔗 1. Design da ancoragem
 
 O MVP **não usa contratos inteligentes**. Seguindo `docs/semana2/ProductBlueprint.md` §8, a impressão digital SHA-256 de cada lote é registrada no campo **Memo Hash (32 bytes)** de uma transação normal na **Stellar Testnet**.
+
+**Opção de contratos (A ou B):**
+
+| Opção | O que é | Status |
+| :--- | :--- | :--- |
+| **A** | Contratos inteligentes na Stellar (Soroban) | Descartada para o MVP |
+| **B** | Transação clássica + Memo Hash (32 bytes) | ✅ **Escolhida** |
+
+*Por que escolhemos a Opção B:* o MVP só precisa provar que a impressão existiu (sem lógica on-chain); custa ≈ 0,00001 XLM por lote e não exige manter um contrato Rust/Wasm. *Por que não a Opção A ainda:* um contrato seria superengenharia até existirem regras de negócio automáticas (ver `StellarContratos.md` §3–4). **Fotos e vídeos nunca vão para a blockchain** — apenas o hash.
 
 | Componente | Decisão |
 | :--- | :--- |

@@ -44,7 +44,14 @@ Los **Stellar Smart Contracts (antes Soroban)** son la plataforma de contratos i
 
 ### 🥚 3. Caso AgroTrace Rural
 
-**Hoy el MVP usa la ruta mínima correcta:** *transacción clásica + Memo Hash (32 bytes)* con `stellar-sdk`. No necesita contrato. **Cuándo sí conviene un contrato:**
+**Opción de contratos (A o B):**
+
+| Opción | Qué es | Estado |
+| :--- | :--- | :--- |
+| **A** | Contratos inteligentes (Soroban) | Postergada |
+| **B** | Transacción clásica + Memo Hash (32 bytes) | ✅ **Elegida para el MVP** |
+
+**Hoy el MVP usa la ruta mínima correcta (Opción B):** *transacción clásica + Memo Hash (32 bytes)* con `stellar-sdk`. No necesita contrato. **Cuándo sí conviene un contrato (Opción A):**
 
 - Reglas de negocio automáticas (ej.: un lote no puede recibir más eventos tras su despacho).
 - Pagos o regalías automáticas entre productor y distribuidor.
@@ -101,7 +108,14 @@ La misma cuenta, las mismas claves y el mismo `stellar-sdk` sirven para ambas ru
 
 ### 🥚 3. AgroTrace Rural case
 
-**Today the MVP uses the correct minimal path:** *classic transaction + Memo Hash (32 bytes)* with `stellar-sdk`. No contract needed. **When a contract does make sense:**
+**Contract option (A or B):**
+
+| Option | What it is | Status |
+| :--- | :--- | :--- |
+| **A** | Smart contracts (Soroban) | Postponed |
+| **B** | Classic transaction + Memo Hash (32 bytes) | ✅ **Chosen for the MVP** |
+
+**Today the MVP uses the correct minimal path (Option B):** *classic transaction + Memo Hash (32 bytes)* with `stellar-sdk`. No contract needed. **When a contract does make sense (Option A):**
 
 - Automatic business rules (e.g. a batch cannot receive more events after dispatch).
 - Automatic payments or royalties between producer and distributor.
@@ -158,7 +172,14 @@ Os **Stellar Smart Contracts (antes Soroban)** são a plataforma de contratos in
 
 ### 🥚 3. Caso AgroTrace Rural
 
-**Hoje o MVP usa a rota mínima correta:** *transação clássica + Memo Hash (32 bytes)* com `stellar-sdk`. Não precisa de contrato. **Quando um contrato faz sentido:**
+**Opção de contratos (A ou B):**
+
+| Opção | O que é | Status |
+| :--- | :--- | :--- |
+| **A** | Contratos inteligentes (Soroban) | Adiada |
+| **B** | Transação clássica + Memo Hash (32 bytes) | ✅ **Escolhida para o MVP** |
+
+**Hoje o MVP usa a rota mínima correta (Opção B):** *transação clássica + Memo Hash (32 bytes)* com `stellar-sdk`. Não precisa de contrato. **Quando um contrato faz sentido (Opção A):**
 
 - Regras de negócio automáticas (ex.: um lote não pode receber mais eventos após o despacho).
 - Pagamentos ou royalties automáticos entre produtor e distribuidor.
