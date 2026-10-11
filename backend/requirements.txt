@@ -1,0 +1,7 @@
+fastapi>=0.115,<1
+uvicorn[standard]>=0.34,<1
+pydantic-settings>=2.7,<3
+stellar-sdk>=16,<17
+python-multipart>=0.0.20
+pytest>=9,<10
+httpx>=0.28,<1
