@@ -1,6 +1,8 @@
 # ⚓ Contratos inteligentes en Stellar: ventajas del ecosistema
 
 > **Proyecto:** AgroTrace Rural · **Tema:** por qué usar las herramientas del ecosistema Stellar para contratos (Soroban / Stellar Smart Contracts)
+>
+> 🌐 **¡App del MVP en línea!** [https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app)
 
 > 🌐 **Idioma / Language:** [🇪🇸 Español](#-español) · [🇺🇸 English](#-english) · [🇧🇷 Português](#-português)
 

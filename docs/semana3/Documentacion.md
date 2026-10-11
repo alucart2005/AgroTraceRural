@@ -1,6 +1,8 @@
 # 🖥️ Documentación del frontend (MVP)
 
 > **Proyecto:** AgroTrace Rural · **Carpeta:** `frontend/` (Next.js 14 · App Router · TypeScript · Tailwind) · **Deploy:** Vercel
+>
+> 🌐 **¡App en línea!** [https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app)
 
 > 🌐 **Idioma / Language:** [🇪🇸 Español](#-español) · [🇺🇸 English](#-english) · [🇧🇷 Português](#-português)
 
@@ -71,6 +73,8 @@ NEXT_PUBLIC_SITE_URL=  # URL pública (base del QR)
 
 **Pasos en Vercel:** Importar repo → **Root Directory: `frontend`** → Framework: Next.js (auto) → agregar env vars → Deploy. Cada PR genera un preview.
 
+**App desplegada (producción):** [https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app) — funciona en modo demo sin backend configurado.
+
 [⬆ Volver al inicio](#-documentación-del-frontend-mvp)
 
 ---
@@ -140,6 +144,8 @@ NEXT_PUBLIC_SITE_URL=  # Public URL (QR base)
 
 **Vercel steps:** import repo → **Root Directory: `frontend`** → Framework: Next.js (auto) → add env vars → Deploy. Every PR generates a preview.
 
+**Deployed app (production):** [https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app) — runs in demo mode with no backend configured.
+
 [⬆ Back to top](#-documentación-del-frontend-mvp)
 
 ---
@@ -208,5 +214,7 @@ NEXT_PUBLIC_SITE_URL=  # URL pública (base do QR)
 ```
 
 **Passos no Vercel:** importar repo → **Root Directory: `frontend`** → Framework: Next.js (auto) → adicionar env vars → Deploy. Cada PR gera um preview.
+
+**Aplicativo implantado (produção):** [https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app) — funciona em modo demo sem backend configurado.
 
 [⬆ Voltar ao topo](#-documentación-del-frontend-mvp)
