@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -21,6 +22,25 @@ class Settings(BaseSettings):
 
     # API key de escritura (header X-API-Key). Vacío → API abierta (dev local).
     api_key: str = ""
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _normalizar_postgres(cls, valor: str) -> str:
+        """Adapta la URL de Neon/Render al driver instalado.
+
+        Neon entrega ``postgres://`` (eliminado en SQLAlchemy 2) y el paquete
+        ``psycopg`` de ``requirements.txt`` es la versión 3, no ``psycopg2``.
+        Cualquier URL postgres sin driver explícito se fuerza a ``+psycopg``.
+        """
+        if not valor:
+            return valor
+        if valor.startswith("postgres://"):
+            valor = "postgresql://" + valor[len("postgres://") :]
+        if valor.startswith("postgresql+psycopg2://"):
+            return "postgresql+psycopg://" + valor[len("postgresql+psycopg2://") :]
+        if valor.startswith("postgresql://"):
+            return "postgresql+psycopg://" + valor[len("postgresql://") :]
+        return valor
 
     class Config:
         env_file = ".env"

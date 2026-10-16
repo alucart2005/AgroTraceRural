@@ -22,7 +22,13 @@ def _connect_args(url: str) -> dict:
 
 
 _url = database_url()
-engine = create_engine(_url, connect_args=_connect_args(_url))
+# pool_pre_ping descarta conexiones colgadas de Neon/Render tras periodos de
+# inactividad (free tier), evitando errores 500 en la primera petición.
+engine = create_engine(
+    _url,
+    connect_args=_connect_args(_url),
+    pool_pre_ping=not _url.startswith("sqlite"),
+)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
