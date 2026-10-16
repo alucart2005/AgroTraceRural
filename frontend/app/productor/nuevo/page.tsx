@@ -45,6 +45,15 @@ async function fileToDataUrl(
   });
 }
 
+/** Tamaño en bytes de lo que realmente se envía (el data URL comprimido). */
+function bytesDeDataUrl(dataUrl: string): number {
+  const i = dataUrl.indexOf(",");
+  if (i < 0) return 0;
+  const base64 = dataUrl.slice(i + 1);
+  const relleno = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
+  return Math.max(1, Math.floor((base64.length * 3) / 4) - relleno);
+}
+
 function formatarBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -115,7 +124,11 @@ export default function NuevoLotePage() {
       const fotos = evidencias.map((ev) => ({
         dataUrl: ev.preview,
         nombre: ev.file.name,
-        tamano: ev.file.size,
+        // El tamaño debe corresponder al data URL comprimido que viaja en la
+        // petición, no al archivo original. Enviar el tamaño del archivo
+        // (p. ej. 18 MB de una foto de celular) hacía fallar la validación del
+        // backend (≤ 10 MB) aunque la imagen ya estuviera comprimida a 800 px.
+        tamano: bytesDeDataUrl(ev.preview),
       }));
       const lote = await registrarLote({
         fecha_cosecha: fecha,
