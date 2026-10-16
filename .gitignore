@@ -12,6 +12,8 @@ env/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+# BD local de desarrollo (producción usa Neon vía DATABASE_URL)
+agrotrace_local.db
 
 # Node / Next.js
 node_modules/
