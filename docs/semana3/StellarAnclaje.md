@@ -2,7 +2,7 @@
 
 > **Proyecto:** AgroTrace Rural · **Módulo:** Anclaje de huellas SHA-256 en Stellar Testnet · **Código:** `backend/app/services/stellar.py`
 >
-> 🌐 **¡App del MVP en línea!** [https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app)
+> 🌐 **¡App del MVP en línea!** [https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)
 
 > 🌐 **Idioma / Language:** [🇪🇸 Español](#-español) · [🇺🇸 English](#-english) · [🇧🇷 Português](#-português)
 

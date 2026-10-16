@@ -2,7 +2,7 @@
 
 > **Proyecto:** AgroTrace Rural · **Carpeta:** `frontend/` (Next.js 14 · App Router · TypeScript · Tailwind) · **Deploy:** Vercel
 >
-> 🌐 **¡App en línea!** [https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app)
+> 🌐 **¡App en línea!** [https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)
 
 > 🌐 **Idioma / Language:** [🇪🇸 Español](#-español) · [🇺🇸 English](#-english) · [🇧🇷 Português](#-português)
 
@@ -16,7 +16,7 @@
 
 ### 🖥️ 1. Front construido
 
-🌐 **La aplicación está desplegada y es usable desde cualquier dispositivo: [https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app)**
+🌐 **La aplicación está desplegada y es usable desde cualquier dispositivo: [https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
 
 #### Stack y arquitectura
 
@@ -105,7 +105,7 @@ El proyecto está desplegado en **Vercel** (proyecto `frontend`, Root Directory 
 
 ### 💻 1. Frontend built
 
-🌐 **The application is deployed and usable from any device: [https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app)**
+🌐 **The application is deployed and usable from any device: [https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
 
 #### Stack and architecture
 
@@ -194,7 +194,7 @@ The project is deployed on **Vercel** (project `frontend`, Root Directory `front
 
 ### 💻 1. Frontend construído
 
-🌐 **O aplicativo está implantado e utilizável de qualquer dispositivo: [https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app)**
+🌐 **O aplicativo está implantado e utilizável de qualquer dispositivo: [https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
 
 #### Stack e arquitetura
 

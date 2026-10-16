@@ -6,10 +6,10 @@
 [![AgTech](https://img.shields.io/badge/Industry-AgTech-green)](#)
 [![Trazabilidad](https://img.shields.io/badge/Traceability-QR%20%2B%20SHA--256-orange)](#)
 [![Colombia](https://img.shields.io/badge/Made%20in-Colombia-yellow)](#)
-[![Vercel](https://img.shields.io/badge/Deployed-Vercel-black)](https://frontend-woad-pi-73.vercel.app)
+[![Vercel](https://img.shields.io/badge/Deployed-Vercel-black)](https://frontend-2mx1.vercel.app)
 
 > 🌐 **¡La app ya está en línea! / The app is live! / O app já está no ar!**
-> 👉 **[https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app)**
+> 👉 **[https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
 
 ---
 
@@ -335,7 +335,7 @@ La plataforma **no reemplaza** los registros oficiales: es una **capa tecnológi
 ### 🚀 Cómo ejecutar el proyecto
 
 > 🌐 **¡La aplicación está desplegada en Vercel!** No necesitas instalar nada para usarla:
-> **[https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app)**
+> **[https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
 
 **Requisitos:** Node.js 20+ · Git · (opcional) Python 3.11+ para el backend FastAPI.
 
@@ -684,7 +684,7 @@ The platform **does not replace** official records: it is a **complementary tech
 ### 🚀 How to run the project
 
 > 🌐 **The application is deployed on Vercel!** You don't need to install anything to use it:
-> **[https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app)**
+> **[https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
 
 **Requirements:** Node.js 20+ · Git · (optional) Python 3.11+ for the FastAPI backend.
 
@@ -1033,7 +1033,7 @@ A plataforma **não substitui** os registros oficiais: é uma **camada tecnológ
 ### 🚀 Como executar o projeto
 
 > 🌐 **O aplicativo está implantado no Vercel!** Você não precisa instalar nada para usá-lo:
-> **[https://frontend-woad-pi-73.vercel.app](https://frontend-woad-pi-73.vercel.app)**
+> **[https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
 
 **Requisitos:** Node.js 20+ · Git · (opcional) Python 3.11+ para o backend FastAPI.
 
