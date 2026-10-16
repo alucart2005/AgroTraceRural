@@ -10,16 +10,24 @@ function trunc(hex: string | null, n = 16): string {
 }
 
 export default function VerificarIntegridad({ lote }: { lote: Lote }) {
-  const [estado, setEstado] = useState<"idle" | "verificando" | "ok" | "error">(
-    "idle"
-  );
+  const [estado, setEstado] = useState<
+    "idle" | "verificando" | "ok" | "error" | "fallo"
+  >("idle");
   const [resultado, setResultado] = useState<Verificacion | null>(null);
 
   async function verificar() {
     setEstado("verificando");
     const r = await verificarLote(lote.codigo);
     setResultado(r);
-    setEstado(r?.verificado ? "ok" : "error");
+    if (r?.verificado) {
+      setEstado("ok");
+    } else if (!r || r.error) {
+      // null = backend/Stellar inaccesible; error = falla de infraestructura.
+      // En ninguno de los dos casos se afirma "alterado".
+      setEstado("fallo");
+    } else {
+      setEstado("error");
+    }
   }
 
   return (
@@ -75,6 +83,39 @@ export default function VerificarIntegridad({ lote }: { lote: Lote }) {
               Modo demo: el ancla está simulada en el navegador. Con el backend
               activo se consulta Stellar Testnet real.
             </p>
+          )}
+        </div>
+      )}
+
+      {estado === "fallo" && (
+        <div className="mt-4 rounded-xl border border-amber-500/40 bg-amber-50 p-4">
+          <p className="badge bg-amber-600 text-white">
+            ⚠️ Verificación no disponible
+          </p>
+          <p className="mt-2 text-sm text-amber-900">
+            {resultado?.error
+              ? `No se pudo completar la verificación on-chain: ${resultado.error}`
+              : "No se pudo consultar el backend o Stellar Testnet en este momento. Intenta de nuevo en unos segundos."}
+          </p>
+          {resultado && (
+            <dl className="mt-3 grid gap-2 text-sm">
+              <div>
+                <dt className="font-semibold text-amber-900">
+                  Hash registrado en Stellar
+                </dt>
+                <dd className="break-all font-mono text-xs">
+                  {resultado.hash_registrado ?? "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-amber-900">
+                  Hash recalculado ahora
+                </dt>
+                <dd className="break-all font-mono text-xs">
+                  {resultado.hash_calculado}
+                </dd>
+              </div>
+            </dl>
           )}
         </div>
       )}

@@ -44,6 +44,8 @@ export interface Verificacion {
   tx_hash: string | null;
   ledger: number | null;
   demo: boolean;
+  /** Motivo de falla de infraestructura (Horizon caído, lote sin anclar...). */
+  error?: string | null;
 }
 
 export const EVENTO_LABELS: Record<EventoTipo, string> = {

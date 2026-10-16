@@ -68,8 +68,12 @@ export default function EventosLotePage({ codigo }: { codigo: string }) {
       setLote(actualizado);
       setDescripcion("");
       setMomento(hoyHoraLocal());
-    } catch {
-      setError("No se pudo registrar el evento. Intenta de nuevo.");
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message
+          ? `No se pudo registrar el evento: ${err.message}`
+          : "No se pudo registrar el evento. Intenta de nuevo."
+      );
     } finally {
       setEnviando(false);
     }
