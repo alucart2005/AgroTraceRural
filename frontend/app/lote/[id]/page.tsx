@@ -68,6 +68,10 @@ export default function LotePage({
             </p>
             <dl className="mt-3 grid gap-1 text-sm sm:grid-cols-3">
               <div>
+                <dt className="font-semibold text-emerald-900">Fecha de postura</dt>
+                <dd>{lote.fecha_postura ?? lote.fecha_cosecha}</dd>
+              </div>
+              <div>
                 <dt className="font-semibold text-emerald-900">Fecha de cosecha</dt>
                 <dd>{lote.fecha_cosecha}</dd>
               </div>

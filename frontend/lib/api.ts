@@ -38,6 +38,7 @@ export async function obtenerLote(codigo: string): Promise<Lote | null> {
 
 export async function registrarLote(input: {
   fecha_cosecha: string;
+  fecha_postura?: string;
   linea_productiva: string;
   cantidad: number;
   unidad: string;

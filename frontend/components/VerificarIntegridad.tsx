@@ -42,13 +42,19 @@ export default function VerificarIntegridad({ lote }: { lote: Lote }) {
       {estado === "ok" && resultado && (
         <div className="mt-4 rounded-xl border border-emerald-600/30 bg-emerald-50 p-4">
           <p className="badge bg-emerald-600 text-white">✅ Información verificada e inalterada</p>
-          <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+          <dl className="mt-3 grid gap-2 text-sm">
             <div>
-              <dt className="font-semibold text-emerald-900">Hash registrado</dt>
-              <dd className="break-all font-mono text-xs">{trunc(resultado.hash_registrado, 24)}</dd>
+              <dt className="font-semibold text-emerald-900">Hash registrado en Stellar</dt>
+              <dd className="break-all font-mono text-xs">{resultado.hash_registrado ?? "—"}</dd>
             </div>
             <div>
-              <dt className="font-semibold text-emerald-900">Transacción</dt>
+              <dt className="font-semibold text-emerald-900">Hash recalculado ahora</dt>
+              <dd className="break-all font-mono text-xs">{resultado.hash_calculado}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-emerald-900">
+                Transacción{resultado.ledger ? ` · ledger ${resultado.ledger}` : ""}
+              </dt>
               <dd className="break-all font-mono text-xs">
                 {trunc(resultado.tx_hash, 24)}
                 {resultado.tx_hash && (
@@ -80,6 +86,22 @@ export default function VerificarIntegridad({ lote }: { lote: Lote }) {
             El hash calculado no coincide con el registrado. Los datos del lote
             fueron modificados después del anclaje.
           </p>
+          {resultado && (
+            <dl className="mt-3 grid gap-2 text-sm">
+              <div>
+                <dt className="font-semibold text-red-900">Hash registrado</dt>
+                <dd className="break-all font-mono text-xs text-red-800">
+                  {resultado.hash_registrado ?? "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-red-900">Hash recalculado ahora</dt>
+                <dd className="break-all font-mono text-xs text-red-800">
+                  {resultado.hash_calculado}
+                </dd>
+              </div>
+            </dl>
+          )}
         </div>
       )}
     </section>

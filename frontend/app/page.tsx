@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Buscador from "@/components/Buscador";
 
 const pasos = [
   {
@@ -63,6 +64,8 @@ export default function Home() {
           <span className="badge bg-white ring-1 ring-emerald-900/10">QR por cubeta</span>
         </div>
       </section>
+
+      <Buscador />
 
       <section className="space-y-4">
         <h2 className="text-2xl font-bold text-emerald-950">Flujo de trazabilidad</h2>

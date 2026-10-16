@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const links = [
   { href: "/", label: "Inicio" },
+  { href: "/#buscar", label: "Consultar lote" },
   { href: "/productor", label: "Productor" },
   { href: "/productor/nuevo", label: "Registrar lote" },
   { href: "/lote/HUE-2027-001", label: "Lote demo" },

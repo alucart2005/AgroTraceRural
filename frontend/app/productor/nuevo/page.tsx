@@ -32,6 +32,9 @@ async function fileToDataUrl(file: File, maxDim = 800): Promise<string> {
 
 export default function NuevoLotePage() {
   const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
+  const [fechaPostura, setFechaPostura] = useState(
+    () => new Date().toISOString().slice(0, 10)
+  );
   const [linea, setLinea] = useState(LINEAS_PRODUCTIVAS[0]);
   const [cantidad, setCantidad] = useState(10);
   const [unidad, setUnidad] = useState("cubetas");
@@ -70,6 +73,7 @@ export default function NuevoLotePage() {
       const fotoDataUrl = await fileToDataUrl(archivo);
       const lote = await registrarLote({
         fecha_cosecha: fecha,
+        fecha_postura: fechaPostura || fecha,
         linea_productiva: linea,
         cantidad,
         unidad,
@@ -120,6 +124,12 @@ export default function NuevoLotePage() {
           <Link href={`/lote/${creado.codigo}/etiqueta`} className="btn-secondary">
             Generar etiqueta QR
           </Link>
+          <Link
+            href={`/productor/lote/${creado.codigo}/eventos`}
+            className="btn-secondary"
+          >
+            Registrar eventos (HU-05)
+          </Link>
           <button
             onClick={() => setCreado(null)}
             className="btn-secondary"
@@ -141,18 +151,35 @@ export default function NuevoLotePage() {
       </div>
 
       <form onSubmit={onSubmit} className="card space-y-4">
-        <div>
-          <label className="label" htmlFor="fecha">
-            Fecha de cosecha
-          </label>
-          <input
-            id="fecha"
-            type="date"
-            className="input"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            required
-          />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="label" htmlFor="fecha">
+              Fecha de cosecha
+            </label>
+            <input
+              id="fecha"
+              type="date"
+              className="input"
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor="fecha-postura">
+              Fecha de postura
+            </label>
+            <input
+              id="fecha-postura"
+              type="date"
+              className="input"
+              value={fechaPostura}
+              onChange={(e) => setFechaPostura(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-emerald-900/50">
+              Se muestra al consumidor en la ficha pública (HU-02).
+            </p>
+          </div>
         </div>
 
         <div>

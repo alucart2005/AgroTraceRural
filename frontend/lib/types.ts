@@ -20,6 +20,8 @@ export interface Lote {
   id: string;
   codigo: string;
   fecha_cosecha: string;
+  /** Fecha de postura de los huevos (HU-02). Opcional: si falta se usa la de cosecha. */
+  fecha_postura?: string;
   linea_productiva: string;
   cantidad: number;
   unidad: string;

@@ -42,6 +42,7 @@ async function makeSeed(): Promise<Lote> {
   const base = {
     codigo: "HUE-2027-001",
     fecha_cosecha: "2027-03-14",
+    fecha_postura: "2027-03-13",
     linea_productiva: "Huevos Guarumo",
     cantidad: 10,
     unidad: "cubetas",
@@ -81,6 +82,7 @@ async function makeSeed(): Promise<Lote> {
     id: "demo-0001",
     codigo: base.codigo,
     fecha_cosecha: base.fecha_cosecha,
+    fecha_postura: base.fecha_postura,
     linea_productiva: base.linea_productiva,
     cantidad: base.cantidad,
     unidad: base.unidad,
@@ -110,6 +112,7 @@ export async function ensureSeed(): Promise<Lote[]> {
 
 export async function crearLote(input: {
   fecha_cosecha: string;
+  fecha_postura?: string;
   linea_productiva: string;
   cantidad: number;
   unidad: string;
@@ -125,6 +128,7 @@ export async function crearLote(input: {
   const base = {
     codigo,
     fecha_cosecha: input.fecha_cosecha,
+    fecha_postura: input.fecha_postura || input.fecha_cosecha,
     linea_productiva: input.linea_productiva,
     cantidad: input.cantidad,
     unidad: input.unidad,

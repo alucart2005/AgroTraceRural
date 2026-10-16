@@ -21,6 +21,19 @@ export default function EtiquetaPage({
     setUrl(`${base}/lote/${id}`);
   }, [id]);
 
+  // HU-04: la fecha de empaque es la del evento "empaque" si existe.
+  const evEmpaque = lote?.eventos
+    ?.filter((e) => e.tipo === "empaque")
+    .sort((a, b) => a.fecha.localeCompare(b.fecha))[0];
+  const fechaEmpaque = evEmpaque
+    ? new Date(evEmpaque.fecha).toLocaleDateString("es-CO", {
+        timeZone: "America/Bogota",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    : lote?.fecha_cosecha;
+
   if (lote === undefined) {
     return <p className="text-sm text-emerald-900/60">Cargando etiqueta…</p>;
   }
@@ -74,7 +87,7 @@ export default function EtiquetaPage({
           {lote.linea_productiva} · {lote.cantidad} {lote.unidad}
         </p>
         <p className="mt-1 text-xs text-emerald-900/60">
-          Fecha de empaque: {lote.fecha_cosecha}
+          Fecha de empaque: {fechaEmpaque ?? "—"}
         </p>
         <p className="mt-3 break-all font-mono text-[10px] text-emerald-900/50">{url}</p>
         <p className="mt-3 text-[10px] text-emerald-900/50">

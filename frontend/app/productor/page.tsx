@@ -59,6 +59,9 @@ export default function ProductorPage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 text-sm">
+                  <Link href={`/productor/lote/${l.codigo}/eventos`} className="btn-secondary">
+                    Eventos
+                  </Link>
                   <Link href={`/lote/${l.codigo}`} className="btn-secondary">
                     Ver público
                   </Link>
