@@ -1,0 +1,43 @@
+# Blueprint de Render para el backend de AgroTrace Rural.
+# En Render: New → Blueprint → elegir este repositorio; el servicio se crea
+# con este archivo. Los valores con `sync: false` se completan en el panel
+# (Settings → Environment) la primera vez: DATABASE_URL (Neon) y secretos.
+services:
+  - type: web
+    name: agrotrace-backend
+    runtime: docker
+    rootDir: backend
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      # Base de datos (Neon Postgres) — pegar el connection string en el panel.
+      - key: DATABASE_URL
+        sync: false
+      # API key de escritura (X-API-Key); el valor se genera y se copia a
+      # Vercel como NEXT_PUBLIC_API_KEY.
+      - key: API_KEY
+        generateValue: true
+      # Cuenta Stellar Testnet — se generan con `python -m scripts.stellar_account create`
+      # y se pegan en el panel; la clave secreta jamás viaja al repositorio.
+      - key: STELLAR_NETWORK
+        value: testnet
+      - key: HORIZON_URL
+        value: https://horizon-testnet.stellar.org
+      - key: STELLAR_PUBLIC_KEY
+        sync: false
+      - key: STELLAR_SECRET_KEY
+        sync: false
+      # Cloudflare R2 (evidencia fotográfica; nunca sube a la blockchain).
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        value: agrotrace-evidence
+      - key: R2_PUBLIC_URL
+        sync: false
+      # Origen permitido (CORS) del frontend de Vercel.
+      - key: FRONTEND_URL
+        value: https://frontend-2mx1.vercel.app
