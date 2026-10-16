@@ -42,9 +42,7 @@ export async function registrarLote(input: {
   linea_productiva: string;
   cantidad: number;
   unidad: string;
-  fotoDataUrl: string;
-  fotoNombre: string;
-  fotoTamano: number;
+  fotos: { dataUrl: string; nombre: string; tamano: number }[];
 }): Promise<Lote> {
   if (API_URL) {
     try {

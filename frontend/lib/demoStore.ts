@@ -13,17 +13,24 @@ function readStore(): Lote[] {
   }
 }
 
-function writeStore(lotes: Lote[]): void {
+function writeStore(lotes: Lote[], podar = false): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(KEY, JSON.stringify(lotes));
   } catch {
-    // Cuota excedida: se descartan las fotos de los lotes guardados.
+    // Sin espacio: NUNCA se descartan las fotos en silencio (HU-01: la foto es
+    // evidencia obligatoria). Se lanza un error visible para quien registra.
+    if (!podar) {
+      throw new Error(
+        "Tu navegador no tiene espacio para guardar la evidencia. " +
+          "Borra lotes de prueba o libera almacenamiento y vuelve a intentarlo."
+      );
+    }
     const slim = lotes.map((l) => ({ ...l, fotos: [] }));
     try {
       localStorage.setItem(KEY, JSON.stringify(slim));
     } catch {
-      // se ignora; el modo demo sigue en memoria
+      // se ignora: solo aplica al crear la semilla inicial
     }
   }
 }
@@ -105,7 +112,7 @@ export async function ensureSeed(): Promise<Lote[]> {
   if (lotes.length === 0) {
     const seed = await makeSeed();
     lotes = [seed];
-    writeStore(lotes);
+    writeStore(lotes, true);
   }
   return lotes;
 }
@@ -116,9 +123,7 @@ export async function crearLote(input: {
   linea_productiva: string;
   cantidad: number;
   unidad: string;
-  fotoDataUrl: string;
-  fotoNombre: string;
-  fotoTamano: number;
+  fotos: { dataUrl: string; nombre: string; tamano: number }[];
 }): Promise<Lote> {
   const lotes = await ensureSeed();
   const codigo = nuevoCodigo(
@@ -134,7 +139,7 @@ export async function crearLote(input: {
     unidad: input.unidad,
     finca: "Finca Guarumo",
     municipio: "Cáceres, Antioquia",
-    evidencias: [{ nombre: input.fotoNombre, tamano: input.fotoTamano }],
+    evidencias: input.fotos.map((f) => ({ nombre: f.nombre, tamano: f.tamano })),
   };
   const hash = await hashLote(payloadDeLote(base));
   const tx = await sha256Hex("demo-anchor:" + hash);
@@ -142,7 +147,7 @@ export async function crearLote(input: {
   const lote: Lote = {
     id: `demo-${Date.now()}`,
     ...base,
-    fotos: [input.fotoDataUrl],
+    fotos: input.fotos.map((f) => f.dataUrl),
     hash_sha256: hash,
     stellar_tx_hash: tx,
     stellar_ledger: 5129949 + lotes.length,

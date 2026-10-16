@@ -6,14 +6,28 @@ import type { Lote } from "@/lib/types";
 import { LINEAS_PRODUCTIVAS } from "@/lib/types";
 import { registrarLote } from "@/lib/api";
 
-async function fileToDataUrl(file: File, maxDim = 800): Promise<string> {
-  const dataUrl = await new Promise<string>((resolve, reject) => {
+interface EvidenciaLocal {
+  file: File;
+  preview: string;
+  /** false: el navegador no pudo decodificarla (p. ej. HEIC) */
+  procesada: boolean;
+}
+
+async function leerDataUrl(file: File): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
     const fr = new FileReader();
     fr.onload = () => resolve(String(fr.result));
     fr.onerror = () => reject(fr.error);
     fr.readAsDataURL(file);
   });
-  return new Promise<string>((resolve) => {
+}
+
+async function fileToDataUrl(
+  file: File,
+  maxDim = 800
+): Promise<{ dataUrl: string; procesada: boolean }> {
+  const original = await leerDataUrl(file);
+  return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
       const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
@@ -21,13 +35,20 @@ async function fileToDataUrl(file: File, maxDim = 800): Promise<string> {
       canvas.width = Math.round(img.width * scale);
       canvas.height = Math.round(img.height * scale);
       const ctx = canvas.getContext("2d");
-      if (!ctx) return resolve(dataUrl);
+      if (!ctx) return resolve({ dataUrl: original, procesada: false });
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", 0.8));
+      resolve({ dataUrl: canvas.toDataURL("image/jpeg", 0.8), procesada: true });
     };
-    img.onerror = () => resolve(dataUrl);
-    img.src = dataUrl;
+    // Formato que el navegador no entiende (HEIC, RAW…): se conserva el original.
+    img.onerror = () => resolve({ dataUrl: original, procesada: false });
+    img.src = original;
   });
+}
+
+function formatarBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export default function NuevoLotePage() {
@@ -38,24 +59,45 @@ export default function NuevoLotePage() {
   const [linea, setLinea] = useState(LINEAS_PRODUCTIVAS[0]);
   const [cantidad, setCantidad] = useState(10);
   const [unidad, setUnidad] = useState("cubetas");
-  const [archivo, setArchivo] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [evidencias, setEvidencias] = useState<EvidenciaLocal[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [creado, setCreado] = useState<Lote | null>(null);
 
-  async function onArchivo(file: File | null) {
-    setArchivo(file);
+  async function onArchivos(files: FileList | null) {
     setError(null);
-    setPreview(file ? await fileToDataUrl(file) : null);
+    setAviso(null);
+    if (!files || files.length === 0) {
+      setEvidencias([]);
+      return;
+    }
+    const nuevas: EvidenciaLocal[] = [];
+    for (const file of Array.from(files)) {
+      const { dataUrl, procesada } = await fileToDataUrl(file);
+      nuevas.push({ file, preview: dataUrl, procesada });
+    }
+    setEvidencias((prev) => [...prev, ...nuevas].slice(0, 6));
+    const noProcesadas = nuevas.filter((n) => !n.procesada);
+    if (noProcesadas.length > 0) {
+      setAviso(
+        `No se pudo procesar ${noProcesadas.map((n) => n.file.name).join(", ")} ` +
+          "(formato que el navegador no entiende, p. ej. HEIC). Se guardará el archivo original: si la foto no se ve, conviértela a JPG."
+      );
+    }
+  }
+
+  function quitarEvidencia(idx: number) {
+    setEvidencias((prev) => prev.filter((_, i) => i !== idx));
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setAviso(null);
 
     // Criterio HU-01, escenario 2: bloquear guardado sin evidencia fotográfica.
-    if (!archivo) {
+    if (evidencias.length === 0) {
       setError("Adjunta al menos una imagen de evidencia antes de guardar.");
       return;
     }
@@ -70,20 +112,26 @@ export default function NuevoLotePage() {
 
     setEnviando(true);
     try {
-      const fotoDataUrl = await fileToDataUrl(archivo);
+      const fotos = evidencias.map((ev) => ({
+        dataUrl: ev.preview,
+        nombre: ev.file.name,
+        tamano: ev.file.size,
+      }));
       const lote = await registrarLote({
         fecha_cosecha: fecha,
         fecha_postura: fechaPostura || fecha,
         linea_productiva: linea,
         cantidad,
         unidad,
-        fotoDataUrl,
-        fotoNombre: archivo.name,
-        fotoTamano: archivo.size,
+        fotos,
       });
       setCreado(lote);
-    } catch {
-      setError("No se pudo registrar el lote. Intenta de nuevo.");
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : "No se pudo registrar el lote. Intenta de nuevo."
+      );
     } finally {
       setEnviando(false);
     }
@@ -113,6 +161,14 @@ export default function NuevoLotePage() {
               <dt className="font-semibold text-emerald-900">Tx Stellar</dt>
               <dd className="break-all font-mono">
                 {creado.stellar_tx_hash ?? "pendiente"}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-emerald-900">Evidencias</dt>
+              <dd>
+                {creado.evidencias
+                  .map((ev) => `${ev.nombre} (${formatarBytes(ev.tamano)})`)
+                  .join(", ") || "—"}
               </dd>
             </div>
           </dl>
@@ -232,28 +288,62 @@ export default function NuevoLotePage() {
 
         <div>
           <label className="label" htmlFor="foto">
-            Foto de evidencia *
+            Foto de evidencia * <span className="font-normal">(mínimo una)</span>
           </label>
           <input
             id="foto"
             type="file"
             accept="image/*"
+            multiple
             className="input"
-            onChange={(e) => onArchivo(e.target.files?.[0] ?? null)}
+            onChange={(e) => onArchivos(e.target.files)}
           />
           <p className="mt-1 text-xs text-emerald-900/50">
-            Obligatoria. La imagen se guarda en almacenamiento externo; en
-            Stellar solo viaja su huella SHA-256.
+            Puedes adjuntar varias imágenes (máx. 6). Se comprimen a 800 px para
+            guardarlas en tu navegador; en Stellar solo viaja su huella SHA-256.
           </p>
-          {preview && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={preview}
-              alt="Vista previa de la evidencia"
-              className="mt-3 h-40 w-full rounded-xl object-cover ring-1 ring-emerald-900/10"
-            />
+
+          {evidencias.length > 0 && (
+            <ul className="mt-3 grid gap-2">
+              {evidencias.map((ev, i) => (
+                <li
+                  key={`${ev.file.name}-${i}`}
+                  className="flex items-center gap-3 rounded-xl border border-emerald-900/10 bg-emerald-50/50 p-2"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={ev.preview}
+                    alt={`Evidencia ${i + 1}`}
+                    className="h-14 w-14 shrink-0 rounded-lg object-cover ring-1 ring-emerald-900/10"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-semibold text-emerald-950">
+                      {ev.file.name}
+                    </p>
+                    <p className="text-[11px] text-emerald-900/60">
+                      {formatarBytes(ev.file.size)} ·{" "}
+                      {ev.procesada ? "lista" : "formato original"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => quitarEvidencia(i)}
+                    aria-label={`Quitar ${ev.file.name}`}
+                    className="shrink-0 rounded-lg border border-red-300/60 bg-white px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                  >
+                    Quitar
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
+
+        {aviso && (
+          <p className="rounded-xl border border-amber-400/50 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-900">
+            ⚠️ {aviso}
+          </p>
+        )}
 
         {error && (
           <p className="rounded-xl border border-red-400/40 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
