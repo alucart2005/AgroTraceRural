@@ -119,6 +119,17 @@ export default function NuevoLotePage() {
       return;
     }
 
+    // Blocar si hay archivos que el navegador no pudo procesar (p. ej. HEIC)
+    const noProcesadas = evidencias.filter((ev) => !ev.procesada);
+    if (noProcesadas.length > 0) {
+      setError(
+        `No se pudo procesar ${noProcesadas.map((n) => n.file.name).join(", ")} ` +
+          "(formato que el navegador no entiende, p. ej. HEIC). " +
+          "Conviértelas a JPG antes de guardar o selecciona otras fotos."
+      );
+      return;
+    }
+
     setEnviando(true);
     try {
       const fotos = evidencias.map((ev) => ({
