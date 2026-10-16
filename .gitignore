@@ -36,3 +36,6 @@ pnpm-debug.log*
 # Logs
 *.log
 logs/
+
+# Harness de pruebas del navegador
+.playwright-mcp/
