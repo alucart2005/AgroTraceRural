@@ -15,6 +15,13 @@ class Settings(BaseSettings):
     r2_bucket: str = "agrotrace-evidence"
     r2_public_url: str = ""
 
+    # Base de datos: Neon Postgres en producción (Render).
+    # Vacío → SQLite local (agrotrace_local.db) para desarrollo sin servicios.
+    database_url: str = ""
+
+    # API key de escritura (header X-API-Key). Vacío → API abierta (dev local).
+    api_key: str = ""
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

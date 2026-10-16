@@ -8,7 +8,18 @@ from stellar_sdk.exceptions import BadRequestError, NotFoundError, Response as H
 from app.services.sha256 import hash_lote
 from app.services.stellar import StellarError, anchor_hash, verify_anchor
 
-HASH_HEX = hash_lote({"codigo": "HUE-2027-001"}, ["a.jpg"])
+HASH_HEX = hash_lote(
+    {
+        "codigo": "HUE-2027-001",
+        "fecha_cosecha": "2027-03-14",
+        "linea_productiva": "Huevos Guarumo",
+        "cantidad": 10,
+        "unidad": "cubetas",
+        "finca": "Finca Guarumo",
+        "municipio": "Cáceres, Antioquia",
+        "evidencias": [{"nombre": "a.jpg", "tamano": 1}],
+    }
+)
 HASH_B64 = base64.b64encode(bytes.fromhex(HASH_HEX)).decode()
 KEYPAIR = Keypair.random()
 
