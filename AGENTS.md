@@ -1,44 +1,146 @@
 # AGENTS.md
 
-AgroTrace Rural: traceability MVP for egg batches from Finca Guarumo. Two independent apps — `frontend/` (Next.js 14, App Router) and `backend/` (FastAPI). UI and domain terms are Spanish (Colombia): *lote, cubeta, finca*. There is no root package manager; run commands inside the relevant subdir.
+AgroTrace Rural: trazabilidad de lotes de huevos de Finca Guarumo con SHA-256
+anclado en Stellar Testnet y QR por cubeta. Dos apps independientes sin gestor
+de paquetes común: `frontend/` (Next.js 14, App Router) y `backend/` (FastAPI +
+SQLAlchemy). UI y términos de dominio en español (Colombia): *lote, cubeta,
+finca*. Ejecuta los comandos dentro del subdirectorio correspondiente.
 
-## Commands
+## Comandos
 
 Frontend (`frontend/`):
 - `npm install`
 - `npm run dev` → http://localhost:3000
 - `npm run lint`
-- `npm run build` — this is also the TypeScript check; there is no separate typecheck script. Then `npm run start`.
-- No frontend test runner is configured; verify with lint + build.
+- `npm run build` — también es la comprobación de tipos; no hay script `typecheck`. Luego `npm run start`.
+- No hay ejecutor de tests: verificar con lint + build.
 
-Backend (`backend/`, run from that dir so `app.*` imports resolve):
+Backend (`backend/`, ejecutar desde ahí para que resuelvan los imports `app.*`):
 - Setup: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
-- `.venv/bin/python -m pytest -q` — 11 tests, all mocked, no network or DB needed
-- `uvicorn app.main:app --reload` — API on :8000
-- `python -m scripts.anchor_demo` — real Testnet anchor + verify (needs `STELLAR_SECRET_KEY`)
+- `.venv/bin/python -m pytest -q` — **50 tests**, todos con R2 y Stellar simulados (sin red, sin BD)
+- `uvicorn app.main:app --reload` — API en :8000
+- `alembic upgrade head` — migra la base configurada en `DATABASE_URL`
+- `python -m scripts.anchor_demo` — ancla y verifica de verdad en Testnet (necesita `STELLAR_SECRET_KEY`; crea una transacción real)
+- `python -m scripts.migrar_sqlite_a_neon` — copia lotes del SQLite local a Neon y revalida los hashes
 - `python -m scripts.stellar_account create|show`
-- Requires Python ≥3.10 (PEP 604 `X | None`); README says 3.11+.
+- Requiere Python ≥3.10 (PEP 604 `X | None`); el Dockerfile usa 3.11.
 
-## Architecture and integration gaps (read before touching the API)
-- Backend exposes only `GET /api/health` and `POST /api/verify` (`backend/app/main.py`). `frontend/lib/api.ts` additionally calls `/api/lotes`, `/api/lotes/{codigo}`, `/api/lotes/{codigo}/eventos` — these do **not exist yet**. With `NEXT_PUBLIC_API_URL` set they 404 and the failure is caught silently, falling back to demo, so a working UI does not prove the backend path works.
-- **Demo mode is the default.** With no `NEXT_PUBLIC_API_URL`, data comes from `frontend/lib/demoStore.ts` (localStorage key `agrotrace.demo.lotes.v2`) and the Stellar tx hash is fabricated in the browser.
-- Two independent canonical-JSON/SHA-256 implementations exist and are **not verified to agree**: `frontend/lib/hash.ts` (hashes `evidencias: [{nombre,tamano}]`) vs `backend/app/services/sha256.py` (`hash_lote` adds a sorted `_fotos` field). Changing one requires checking the other.
-- The UI verifier (`frontend/components/VerificarIntegridad.tsx`) recomputes the hash client-side via `lib/api.ts:verificarLote` and compares to `lote.hash_sha256`; it does not call backend `/api/verify`.
-- No database exists yet despite the README's PostgreSQL diagram: no ORM, models, migrations, or `DATABASE_URL`. The `postgres` MCP in `.opencode/opencode.json` is intentionally disabled.
+## Base de datos
 
-## Stellar anchoring (`backend/app/services/stellar.py`)
-- Only the 32-byte SHA-256 hash travels on-chain, as a transaction **Memo Hash**; files/photos never do.
-- `anchor_hash` submits a 1-unit payment to the same account; `ensure_funded` uses Friendbot to create/fund Testnet accounts. Network passphrase is hardcoded Testnet.
-- Needs `STELLAR_SECRET_KEY` (raises `StellarError` otherwise); `hash_hex` must decode to exactly 32 bytes.
-- Horizon returns hash memos base64-encoded; `verify_anchor` decodes before comparing.
+SQLAlchemy 2 + Alembic. **Producción: Neon Postgres** (proyecto `agrotrace`,
+región `aws-us-west-2`). **Desarrollo local: SQLite** (`agrotrace_local.db`,
+ignorado por git) cuando `DATABASE_URL` está vacía — ver `app/db.py`.
 
-## Env
-- `backend/.env` (gitignored; template `backend/.env.example`): `STELLAR_NETWORK`, `HORIZON_URL`, `STELLAR_PUBLIC_KEY`, `STELLAR_SECRET_KEY`, `FRONTEND_URL`.
-- `frontend/.env.local` (template `frontend/.env.example`): `NEXT_PUBLIC_API_URL` (enables the real backend), `NEXT_PUBLIC_SITE_URL` (QR base URL), `BACKEND_URL` (Vercel `/api/*` rewrite target in `frontend/vercel.json`).
+Modelos (`app/models/lote.py`): `Lote` (codigo único `HUE-YYYY-NNN`,
+fecha_cosecha, fecha_postura, linea_productiva, cantidad, unidad, finca,
+municipio, `fotos` JSON con URLs de R2, `evidencias` JSON `[{nombre,tamano}]`,
+hash_sha256, stellar_tx_hash, stellar_ledger, created_at) y `Evento`
+(tipo/fecha/descripcion, clave foránea a lote con `ON DELETE CASCADE`).
 
-## Conventions and repo shape
-- HUs map to routes: HU-01 registro `/productor/nuevo`, HU-02/03/05 público `/lote/[id]`, HU-04 etiqueta `/lote/[id]/etiqueta`. Acceptance criteria live in `docs/backlog/IssuesListos.md`; the backlog Kanban is `docs/semana2/KanbanBacklog.md`.
-- Weekly deliverables live under `docs/semanaN/` as per-student Markdown; `NombreApellido1.md` files are empty template placeholders — preserve the rubric structure.
-- Commit messages are short and prefixed (`feat:`, `docs:`).
-- Deployment: Vercel project `frontend` (Root Directory `frontend`, Next.js auto-detected). Push to `main` → production; PRs → preview. Remote: `github.com/alucart2005/AgroTraceRural`.
-- The repo-specific skill `agrotrace-mvp` covers full-stack/HU/env/deploy details in depth; `.opencode/opencode.json` holds the project MCPs (context7, playwright, vercel, cloudflare, github).
+`lifespan` ejecuta `Base.metadata.create_all`; en Render las tablas las define
+Alembic (`alembic upgrade head` en el CMD del Dockerfile) antes de arrancar, así
+que `create_all` queda sin efecto.
+
+## API (`app/api/`)
+
+| Método | Ruta | Auth | HU |
+|---|---|---|---|
+| `GET` | `/api/health` | — | — |
+| `POST` | `/api/lotes` | `X-API-Key` | HU-01 |
+| `GET` | `/api/lotes` | — | HU-05 |
+| `GET` | `/api/lotes/{codigo}` | — | HU-02 |
+| `GET` | `/api/lotes/{codigo}/eventos` | — | HU-05 |
+| `POST` | `/api/lotes/{codigo}/eventos` | `X-API-Key` | HU-05 |
+| `POST` | `/api/lotes/{codigo}/anclar` | `X-API-Key` | reintento de ancla |
+| `GET` | `/api/verify/{codigo}` | — | HU-03 |
+| `POST` | `/api/verify` | `X-API-Key` | auditoría de una tx suelta |
+
+Solo las escrituras exigen la clave (`app/api/deps.py`); las lecturas quedan
+abiertas para que el QR del consumidor funcione sin credenciales. Si `API_KEY`
+está vacía, la API queda abierta (desarrollo local).
+
+El QR **no** tiene endpoint propio: la etiqueta se genera en el navegador con
+`qrcode.react` en `/lote/[id]/etiqueta` (HU-04).
+
+### Paridad del hash (crítico)
+
+`app/services/sha256.py` y `frontend/lib/hash.ts` deben producir el MISMO
+SHA-256. El payload canónico son **exactamente 8 campos** (`CAMPOS_LOTE`):
+`codigo`, `fecha_cosecha`, `linea_productiva`, `cantidad`, `unidad`, `finca`,
+`municipio`, `evidencias`. `fecha_postura`, `fotos` (URLs de R2), hashes y
+transacción quedan FUERA a propósito.
+
+`tests/test_sha256.py` fija vectores calculados con el código real del navegador;
+si ese test falla, la verificación HU-03 se rompe en producción. **Cambiar un
+lado obliga a recalcular los vectores con el otro.**
+
+`tamano` en `evidencias` es el tamaño del data URL comprimido que envía el
+cliente, no el del archivo original: es lo que viaja en el hash.
+
+## Stellar (`app/services/stellar.py`)
+
+Solo los 32 bytes del SHA-256 viajan on-chain, como **Memo Hash** de un pago de
+1 XLM a la misma cuenta. `anchor_hash` paga Friendbot si la cuenta no existe y
+reintenta 3 veces ante `tx_too_late`/`tx_bad_seq`. `verify_anchor` decodifica el
+memo (Horizon lo devuelve en base64) y lo compara; captura `NotFoundError` y
+`BadRequestError` como `StellarError`, nunca como 500.
+
+El ancla **no bloquea la existencia del registro**: si Horizon falla, el lote
+queda guardado con `stellar_tx_hash = None` y se reintenta con
+`POST /api/lotes/{codigo}/anclar`. Ten en cuenta que la llamada a Horizon sí
+sincroniza dentro del handler de `POST /api/lotes`.
+
+## Frontend
+
+Rutas: `/` (landing + buscador HU-05), `/productor` (HU-05), `/productor/nuevo`
+(HU-01), `/productor/lote/[codigo]/eventos` (HU-05), `/lote/[id]` (HU-02),
+`/lote/[id]/etiqueta` (HU-04).
+
+`lib/api.ts` habla con el backend cuando `NEXT_PUBLIC_API_URL` está definida; si
+no, o si el backend no responde, cae al **modo demo** (`lib/demoStore.ts`,
+localStorage). Las lecturas silencian el fallo pero lo dejan marcado con
+`modoDemoActivo()`, y las pantallas lo anuncian con `components/AvisoModoDemo`:
+sin ese aviso, un backend caído se veía como datos reales. Las **escrituras NO**
+tienen fallback demo: el error se muestra y no se crea ningún lote fantasma.
+
+Un `404` del backend se trata como "el lote no existe" y NO busca en el
+almacén local, para que un QR falso no parezca auténtico.
+
+## Variables de entorno
+
+`backend/.env` (gitignored; plantilla `backend/.env.example`): `DATABASE_URL`,
+`STELLAR_NETWORK`, `HORIZON_URL`, `STELLAR_PUBLIC_KEY`, `STELLAR_SECRET_KEY`,
+`FRONTEND_URL` (CORS), `R2_*`, `API_KEY`.
+
+`frontend/.env.local` (plantilla `frontend/.env.example`): `NEXT_PUBLIC_API_URL`,
+`NEXT_PUBLIC_API_KEY`, `NEXT_PUBLIC_SITE_URL`.
+
+**`NEXT_PUBLIC_API_URL` va SIN sufijo `/api`** (`http://localhost:8000`,
+`https://agrotrace-backend.onrender.com`). `lib/api.ts` concatena rutas que ya
+empiezan por `/api/`; un sufijo produce `/api/api/lotes` → 404 y el frontend
+cae en modo demo sin avisar.
+
+Todo lo prefijado con `NEXT_PUBLIC_` se embebido en el JavaScript servido al
+navegador: `NEXT_PUBLIC_API_KEY` es **pública**, no un secreto.
+
+## Despliegue
+
+- **Backend → Render** (Web Service + Docker, `render.yaml`). NO Vercel: las
+  funciones de Vercel se cortan a los 10 s y su filesystem es efímero.
+  Render despliega desde `main`; el CMD del Dockerfile migra antes de servir.
+- **Frontend → Vercel**, proyecto `frontend-2mx1`, Root Directory `frontend`.
+- El frontend llama al backend **directamente** con `NEXT_PUBLIC_API_URL` y el
+  backend permite el origen con `FRONTEND_URL`. **No hay `vercel.json`**: Vercel
+  no interpola variables de entorno dentro de ese fichero, así que un rewrite
+  con `${BACKEND_URL}` nunca funcionó y solo duplicaba la URL en dos sitios.
+
+## Convenciones
+
+- Commits cortos y prefijados (`feat:`, `fix:`, `docs:`, `chore:`); hacer push
+  **solo bajo petición explícita**.
+- Documentación trilingüe (ES / EN / PT) siguiendo el patrón de
+  `docs/semana2/KanbanBacklog.md`.
+- Producto piloto: huevos de Finca Guarumo, Cáceres (Antioquia). Código de
+  lote `HUE-YYYY-NNN`, secuencial por año.
+- Las 5 historias viven en `docs/backlog/IssuesListos.md` (HU-01..HU-05) y en
+  GitHub Issues #1..#5.
