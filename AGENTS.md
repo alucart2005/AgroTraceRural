@@ -141,8 +141,15 @@ navegador: `NEXT_PUBLIC_API_KEY` es **pública**, no un secreto.
 
 - **Backend → Render** (Web Service + Docker, `render.yaml`). NO Vercel: las
   funciones de Vercel se cortan a los 10 s y su filesystem es efímero.
+  Servicio `agrotrace-backend-z3q1` (`srv-db9d6r67bikc73fjqe80`), región
+  Oregon, plan free → `https://agrotrace-backend-z3q1.onrender.com`.
   Render despliega desde `main`; el CMD del Dockerfile migra antes de servir.
+  `backend/.env.rendered` (gitignored) guarda el service id y el `API_KEY`
+  generado en el panel.
 - **Frontend → Vercel**, proyecto `frontend-2mx1`, Root Directory `frontend`.
+  Variables de producción: `NEXT_PUBLIC_API_URL` (la de Render, **sin** sufijo
+  `/api`) y `NEXT_PUBLIC_API_KEY`. Cambiarlas obliga a **redeploy**: Next
+  las inlina en el bundle durante el build.
 - El frontend llama al backend **directamente** con `NEXT_PUBLIC_API_URL` y el
   backend permite el origen con `FRONTEND_URL`. **No hay `vercel.json`**: Vercel
   no interpola variables de entorno dentro de ese fichero, así que un rewrite
