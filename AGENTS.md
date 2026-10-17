@@ -31,6 +31,18 @@ SQLAlchemy 2 + Alembic. **Producción: Neon Postgres** (proyecto `agrotrace`,
 región `aws-us-west-2`). **Desarrollo local: SQLite** (`agrotrace_local.db`,
 ignorado por git) cuando `DATABASE_URL` está vacía — ver `app/db.py`.
 
+La URL de Neon vive en `backend/.env.neon` (ignorado por git), **no** en
+`.env`: así el día a día sigue usando SQLite y no se ensucian los datos reales.
+El backend no la carga sola; se pasa a mano cuando hace falta:
+
+```bash
+DATABASE_URL="$(sed -n 's/^DATABASE_URL=//p' .env.neon)" alembic upgrade head
+DATABASE_URL="$(sed -n 's/^DATABASE_URL=//p' .env.neon)" python -m scripts.migrar_sqlite_a_neon
+```
+
+En Render `DATABASE_URL` se fija en el panel (Settings → Environment) con el
+endpoint **pooler** de Neon, no el directo.
+
 Modelos (`app/models/lote.py`): `Lote` (codigo único `HUE-YYYY-NNN`,
 fecha_cosecha, fecha_postura, linea_productiva, cantidad, unidad, finca,
 municipio, `fotos` JSON con URLs de R2, `evidencias` JSON `[{nombre,tamano}]`,
@@ -108,9 +120,11 @@ almacén local, para que un QR falso no parezca auténtico.
 
 ## Variables de entorno
 
-`backend/.env` (gitignored; plantilla `backend/.env.example`): `DATABASE_URL`,
-`STELLAR_NETWORK`, `HORIZON_URL`, `STELLAR_PUBLIC_KEY`, `STELLAR_SECRET_KEY`,
-`FRONTEND_URL` (CORS), `R2_*`, `API_KEY`.
+`backend/.env` (gitignored; plantilla `backend/.env.example`): `STELLAR_NETWORK`,
+`HORIZON_URL`, `STELLAR_PUBLIC_KEY`, `STELLAR_SECRET_KEY`, `FRONTEND_URL`
+(CORS), `R2_*`, `API_KEY`, y `DATABASE_URL` **vacío** para que el desarrollo
+local use SQLite. `backend/.env.neon` guarda la URL de producción (también
+gitignored); ver la sección de base de datos.
 
 `frontend/.env.local` (plantilla `frontend/.env.example`): `NEXT_PUBLIC_API_URL`,
 `NEXT_PUBLIC_API_KEY`, `NEXT_PUBLIC_SITE_URL`.
