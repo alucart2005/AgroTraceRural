@@ -5,6 +5,28 @@ import { crearLote, ensureSeed, guardarEvento } from "./demoStore";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
+// Marca si la última LECTURA cayó en el almacén local del navegador (sin
+// backend, o con el backend caído). La interfaz lo consulta con
+// ``modoDemoActivo()`` justo después del await para poder ANUNCIARLO: sin este
+// aviso un backend caído se veía como si los datos fantasma fueran reales.
+let _modoDemo = false;
+
+/** true si los datos que acaban de cargarse vienen del modo demo, no del backend. */
+export function modoDemoActivo(): boolean {
+  return _modoDemo;
+}
+
+/** Error de la API con su código HTTP, para distinguir un 404 real de una caída. */
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, mensaje: string) {
+    super(mensaje);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
@@ -21,32 +43,52 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
       cuerpo && typeof cuerpo === "object" && "detail" in cuerpo
         ? String((cuerpo as { detail: unknown }).detail)
         : "";
-    throw new Error(detalle ? `API ${res.status}: ${detalle}` : `API ${res.status}`);
+    throw new ApiError(
+      res.status,
+      detalle ? `API ${res.status}: ${detalle}` : `API ${res.status}`
+    );
   }
   return (await res.json()) as T;
 }
 
 export async function listarLotes(): Promise<Lote[]> {
-  if (API_URL) {
-    try {
-      return await fetchJson<Lote[]>("/api/lotes");
-    } catch {
-      // backend no disponible → modo demo
-    }
+  if (!API_URL) {
+    _modoDemo = true;
+    return ensureSeed();
   }
-  return ensureSeed();
+  try {
+    const lotes = await fetchJson<Lote[]>("/api/lotes");
+    _modoDemo = false;
+    return lotes;
+  } catch {
+    // Backend inaccesible: se recurre al almacén local pero quedando constancia,
+    // para que la pantalla lo advierta en vez de fingir que son datos reales.
+    _modoDemo = true;
+    return ensureSeed();
+  }
 }
 
 export async function obtenerLote(codigo: string): Promise<Lote | null> {
-  if (API_URL) {
-    try {
-      return await fetchJson<Lote>(`/api/lotes/${codigo}`);
-    } catch {
-      // backend no disponible → modo demo
-    }
+  if (!API_URL) {
+    _modoDemo = true;
+    const lotes = await ensureSeed();
+    return lotes.find((l) => l.codigo === codigo) ?? null;
   }
-  const lotes = await ensureSeed();
-  return lotes.find((l) => l.codigo === codigo) ?? null;
+  try {
+    const lote = await fetchJson<Lote>(`/api/lotes/${codigo}`);
+    _modoDemo = false;
+    return lote;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      // El backend respondió y no conoce ese código: el lote NO existe. Aquí no
+      // se busca en el almacén local, o un QR falso "existiría" para el usuario.
+      _modoDemo = false;
+      return null;
+    }
+    _modoDemo = true;
+    const lotes = await ensureSeed();
+    return lotes.find((l) => l.codigo === codigo) ?? null;
+  }
 }
 
 export async function registrarLote(input: {

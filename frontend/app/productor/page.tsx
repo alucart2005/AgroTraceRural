@@ -2,14 +2,21 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { listarLotes } from "@/lib/api";
+import { listarLotes, modoDemoActivo } from "@/lib/api";
 import type { Lote } from "@/lib/types";
+import AvisoModoDemo from "@/components/AvisoModoDemo";
 
 export default function ProductorPage() {
   const [lotes, setLotes] = useState<Lote[] | null>(null);
+  const [demo, setDemo] = useState(false);
 
   useEffect(() => {
-    listarLotes().then(setLotes);
+    listarLotes().then((l) => {
+      // Se lee inmediatamente después del await, antes de que otra llamada
+      // pueda reemplazar el marcador.
+      setDemo(modoDemoActivo());
+      setLotes(l);
+    });
   }, []);
 
   return (
@@ -25,6 +32,8 @@ export default function ProductorPage() {
           + Nuevo lote
         </Link>
       </div>
+
+      {demo && <AvisoModoDemo detalle="estos lotes son de ejemplo" />}
 
       {lotes === null && (
         <p className="text-sm text-emerald-900/60">Cargando lotes…</p>

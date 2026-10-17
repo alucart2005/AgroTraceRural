@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { EventoTipo, Lote } from "@/lib/types";
 import { EVENTO_LABELS } from "@/lib/types";
-import { agregarEvento, obtenerLote } from "@/lib/api";
+import { agregarEvento, modoDemoActivo, obtenerLote } from "@/lib/api";
+import AvisoModoDemo from "@/components/AvisoModoDemo";
 import Timeline from "@/components/Timeline";
 
 const TIPOS_REGISTRABLES: Exclude<EventoTipo, "cosecha">[] = [
@@ -28,6 +29,7 @@ function hoyHoraLocal(): { fecha: string; hora: string } {
  */
 export default function EventosLotePage({ codigo }: { codigo: string }) {
   const [lote, setLote] = useState<Lote | null | undefined>(undefined);
+  const [demo, setDemo] = useState(false);
   const [tipo, setTipo] = useState<EventoTipo>("clasificacion");
   const [{ fecha, hora }, setMomento] = useState(hoyHoraLocal());
   const [descripcion, setDescripcion] = useState("");
@@ -35,7 +37,12 @@ export default function EventosLotePage({ codigo }: { codigo: string }) {
   const [enviando, setEnviando] = useState(false);
 
   const recargar = useCallback(() => {
-    obtenerLote(codigo).then(setLote);
+    obtenerLote(codigo).then((l) => {
+      // Se lee inmediatamente después del await, antes de que otra llamada
+      // pueda reemplazar el marcador.
+      setDemo(modoDemoActivo());
+      setLote(l);
+    });
   }, [codigo]);
 
   useEffect(() => {
@@ -119,6 +126,16 @@ export default function EventosLotePage({ codigo }: { codigo: string }) {
           Ver ficha pública
         </Link>
       </div>
+
+      {(demo || lote.demo) && (
+        <AvisoModoDemo
+          detalle={
+            lote.demo
+              ? "este lote es un ejemplo incluido con la aplicación"
+              : "el backend no respondió; este historial se guarda solo en tu navegador"
+          }
+        />
+      )}
 
       <section className="card">
         <h2 className="mb-4 text-xl font-bold text-emerald-950">

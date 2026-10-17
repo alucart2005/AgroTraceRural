@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Lote } from "@/lib/types";
-import { obtenerLote } from "@/lib/api";
+import { modoDemoActivo, obtenerLote } from "@/lib/api";
+import AvisoModoDemo from "@/components/AvisoModoDemo";
 import VerificarIntegridad from "@/components/VerificarIntegridad";
 import Timeline from "@/components/Timeline";
 
@@ -14,9 +15,15 @@ export default function LotePage({
 }) {
   const { id } = params;
   const [lote, setLote] = useState<Lote | null | undefined>(undefined);
+  const [demo, setDemo] = useState(false);
 
   useEffect(() => {
-    obtenerLote(id).then(setLote);
+    obtenerLote(id).then((l) => {
+      // Se lee inmediatamente después del await, antes de que otra llamada
+      // pueda reemplazar el marcador.
+      setDemo(modoDemoActivo());
+      setLote(l);
+    });
   }, [id]);
 
   if (lote === undefined) {
@@ -48,10 +55,14 @@ export default function LotePage({
 
   return (
     <div className="space-y-6">
-      {lote.demo && (
-        <p className="badge bg-amber-100 text-amber-900">
-          🧪 Modo demo — datos de ejemplo en tu navegador
-        </p>
+      {(demo || lote.demo) && (
+        <AvisoModoDemo
+          detalle={
+            lote.demo
+              ? "este lote es un ejemplo incluido con la aplicación"
+              : "el backend no respondió, así que se muestra una copia guardada en tu navegador"
+          }
+        />
       )}
 
       <section className="card">
