@@ -5,11 +5,7 @@ from __future__ import annotations
 import time
 
 from stellar_sdk import Asset, Keypair, Network, Server, TransactionBuilder
-from stellar_sdk.exceptions import (
-    BadRequestError,
-    NotFoundError,
-    Response as HorizonResponse,
-)
+from stellar_sdk.exceptions import BadRequestError, NotFoundError
 
 from app.core.config import settings
 
@@ -114,6 +110,10 @@ def verify_anchor(tx_hash: str, hash_hex: str) -> dict:
         tx = server.transactions().transaction(tx_hash).call()
     except NotFoundError:
         raise StellarError("Transacción no encontrada en Horizon")
+    except BadRequestError as exc:
+        # p. ej. un hash que no es hex: sin esto la excepción escaparía del
+        # endpoint y el cliente recibiría un 500 sin diagnóstico.
+        raise StellarError(f"Horizon rechazó la consulta: {exc}") from exc
 
     memo_ok = False
     if tx.get("memo_type") == "hash":

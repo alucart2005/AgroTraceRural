@@ -71,3 +71,18 @@ def upload_evidence(key: str, fileobj, content_type: str = "application/octet-st
     except Exception as exc:  # noqa: BLE001 — envolvemos cualquier fallo de S3
         raise StorageError(f"No se pudo subir {key} a R2: {exc}") from exc
     return public_url(key)
+
+
+def delete_evidence(key: str) -> None:
+    """Borra un objeto de R2. Mejor esfuerzo: nunca lanza.
+
+    Se usa para retirar evidencia huérfana cuando el lote no llegó a
+    persistirse. Un fallo aquí solo deja un archivo sin referenciar en el
+    bucket; reventar la operación principal sería peor.
+    """
+    if not is_configured():
+        return
+    try:
+        get_s3_client().delete_object(Bucket=settings.r2_bucket, Key=key)
+    except Exception:  # noqa: BLE001 — limpieza best-effort
+        pass

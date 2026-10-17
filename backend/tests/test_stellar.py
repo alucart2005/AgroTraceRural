@@ -100,3 +100,14 @@ def test_verify_tx_no_existe(mock_get):
     mock_get.return_value = server
     with pytest.raises(StellarError):
         verify_anchor("nope", HASH_HEX)
+
+
+@patch("app.services.stellar.get_server")
+def test_verify_hash_malformado_no_escapa_como_500(mock_get):
+    """Horizon responde 400 si el tx_id no es hex; debe volverse StellarError."""
+    server = MagicMock()
+    resp = HorizonResponse(status_code=400, text="bad request", headers={}, url="http://x")
+    server.transactions.return_value.transaction.return_value.call.side_effect = BadRequestError(resp)
+    mock_get.return_value = server
+    with pytest.raises(StellarError, match="Horizon rechazó"):
+        verify_anchor("no-es-hex", HASH_HEX)

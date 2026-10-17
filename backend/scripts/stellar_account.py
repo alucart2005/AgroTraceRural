@@ -2,8 +2,7 @@
 
 import sys
 
-from app.core.config import settings
-from app.services.stellar import StellarError, ensure_funded, get_server, load_keypair
+from app.services.stellar import ensure_funded, get_server, load_keypair
 
 
 def create():

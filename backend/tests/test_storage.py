@@ -4,7 +4,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from app.services import storage
-from app.services.storage import StorageError, evidence_key, public_url, upload_evidence
+from app.services.storage import (
+    StorageError,
+    delete_evidence,
+    evidence_key,
+    public_url,
+    upload_evidence,
+)
 
 
 def _set_r2(**over):
@@ -57,6 +63,31 @@ def test_upload_evidence_error_de_s3_lanza_storage_error():
 
 def test_evidence_key_sanitiza_espacios():
     assert evidence_key("HUE-2027-001", "foto una.jpg") == "evidencias/HUE-2027-001/foto_una.jpg"
+
+
+def test_delete_evidence_borra_el_objeto():
+    client = MagicMock()
+    with _set_r2(), patch.object(storage, "get_s3_client", return_value=client):
+        delete_evidence("evidencias/HUE-2027-001/a.jpg")
+    client.delete_object.assert_called_once_with(
+        Bucket="agrotrace-evidence", Key="evidencias/HUE-2027-001/a.jpg"
+    )
+
+
+def test_delete_evidence_nunca_lanza():
+    """La limpieza es best-effort: un fallo de R2 no debe enmascarar el error real."""
+    client = MagicMock()
+    client.delete_object.side_effect = RuntimeError("boom")
+    with _set_r2(), patch.object(storage, "get_s3_client", return_value=client):
+        delete_evidence("k")  # no lanza
+
+
+def test_delete_evidence_sin_configuracion_no_hace_nada():
+    with patch.object(storage, "is_configured", return_value=False), patch.object(
+        storage, "get_s3_client"
+    ) as cliente:
+        delete_evidence("k")
+    cliente.assert_not_called()
 
 
 def test_public_url_sin_base_devuelve_key():

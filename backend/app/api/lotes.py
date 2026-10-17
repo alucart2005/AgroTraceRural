@@ -14,6 +14,7 @@ from app.db import get_db
 from app.models.lote import Evento, Lote
 from app.schemas import EventoIn, EventoOut, LoteCreateIn, LoteOut, VerificacionOut
 from app.services import lotes as servicio
+from app.services.lotes import CodigoNoDisponible
 from app.services.sha256 import hash_lote
 from app.services.stellar import StellarError, verify_anchor
 from app.services.storage import StorageError
@@ -37,6 +38,9 @@ def crear_lote(datos: LoteCreateIn, db: Session = Depends(get_db)):
     """HU-01: registrar lote con evidencia fotográfica y anclarlo en Stellar."""
     try:
         return servicio.crear_lote(db, datos)
+    except CodigoNoDisponible as exc:
+        # Colisión concurrente del código secuencial: se pide reintentar.
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except StorageError as exc:
         raise HTTPException(status_code=503, detail=f"Almacenamiento: {exc}") from exc
     except ValueError as exc:

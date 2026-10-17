@@ -20,6 +20,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.lote import Evento, Lote
@@ -32,10 +33,19 @@ log = logging.getLogger(__name__)
 FINCA = "Finca Guarumo"
 MUNICIPIO = "Cáceres, Antioquia"
 
+# Dos peticiones simultáneas pueden leer el mismo máximo y proponer el mismo
+# código; el índice único lo convierte en IntegrityError. Se reintenta con un
+# código nuevo en lugar de devolver un 500.
+INTENTOS_CODIGO = 3
+
 _DATA_URL = re.compile(
     r"^data:(?P<tipo>[a-zA-Z0-9/+.-]+);base64,(?P<datos>.+)$", re.DOTALL
 )
 _CODIGO = re.compile(r"^HUE-(\d{4})-(\d{3})$")
+
+
+class CodigoNoDisponible(Exception):
+    """El código del lote no pudo asignarse tras varios intentos."""
 
 
 def decodificar_data_url(data_url: str) -> tuple[bytes, str]:
@@ -73,19 +83,66 @@ def _nombre_seguro(nombre: str) -> str:
 
 
 def crear_lote(db: Session, datos) -> Lote:
-    """Crea el lote completo. ``datos`` es un ``LoteCreateIn``."""
-    codigo = siguiente_codigo(db, datos.fecha_cosecha)
+    """Crea el lote completo. ``datos`` es un ``LoteCreateIn``.
+
+    Las fotos se suben UNA sola vez (la clave R2 depende del ``uuid`` del lote,
+    no del código) y solo se reintenta el INSERT, que es lo que puede chocar
+    por el índice único de ``codigo``.
+    """
     lote_id = str(uuid.uuid4())
     evidencias = [{"nombre": f.nombre, "tamano": f.tamano} for f in datos.fotos]
 
     # 1) fotos → R2 (solo viajan sus referencias al hash, nunca los bytes)
+    claves: list[str] = []
     fotos: list[str] = []
-    for indice, foto in enumerate(datos.fotos):
-        crudo, mime = decodificar_data_url(foto.dataUrl)
-        clave = storage.evidence_key(lote_id, f"{indice:02d}_{_nombre_seguro(foto.nombre)}")
-        fotos.append(storage.upload_evidence(clave, io.BytesIO(crudo), mime))
+    try:
+        for indice, foto in enumerate(datos.fotos):
+            crudo, mime = decodificar_data_url(foto.dataUrl)
+            clave = storage.evidence_key(
+                lote_id, f"{indice:02d}_{_nombre_seguro(foto.nombre)}"
+            )
+            claves.append(clave)
+            fotos.append(storage.upload_evidence(clave, io.BytesIO(crudo), mime))
+    except Exception:
+        # Nada llegó a guardarse: no dejamos huérfanos en el bucket.
+        _limpiar(claves)
+        raise
 
-    # 2) hash canónico (mismo payload que calcula el navegador)
+    # 2) hash + persistencia, con reintento ante colisión de código
+    for intento in range(INTENTOS_CODIGO):
+        codigo = siguiente_codigo(db, datos.fecha_cosecha)
+        try:
+            lote = _persistir(db, datos, lote_id, codigo, fotos, evidencias)
+        except IntegrityError as exc:
+            db.rollback()
+            log.warning("Colisión de código %s (intento %s)", codigo, intento + 1)
+            if intento == INTENTOS_CODIGO - 1:
+                _limpiar(claves)
+                raise CodigoNoDisponible(
+                    "No se pudo asignar un código de lote único; intenta de nuevo"
+                ) from exc
+            continue
+        break
+    else:  # pragma: no cover — el bucle siempre rompe o lanza dentro
+        _limpiar(claves)
+        raise CodigoNoDisponible("No se pudo asignar un código de lote único")
+
+    # 3) ancla on-chain (no bloqueante para la existencia del registro)
+    anclar_lote(db, lote)
+    return lote
+
+
+def _limpiar(claves: list[str]) -> None:
+    """Borra de R2 la evidencia subida en una operación que no se completó."""
+    for clave in claves:
+        storage.delete_evidence(clave)
+
+
+def _persistir(
+    db: Session, datos, lote_id: str, codigo: str, fotos: list[str], evidencias: list[dict]
+) -> Lote:
+    """Calcula el hash canónico y guarda lote + evento inicial de cosecha."""
+    # hash canónico (mismo payload que calcula el navegador)
     hash_hex = hash_lote(
         {
             "codigo": codigo,
@@ -126,9 +183,6 @@ def crear_lote(db: Session, datos) -> Lote:
     db.add(lote)
     db.commit()
     db.refresh(lote)
-
-    # 3) ancla on-chain (no bloqueante para la existencia del registro)
-    anclar_lote(db, lote)
     return lote
 
 

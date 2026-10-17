@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from app.core.config import settings
 from app.services.sha256 import hash_lote
 from app.services.stellar import StellarError
@@ -235,3 +233,107 @@ def test_verify_detecta_datos_alterados(client, db_session):
     assert v["verificado"] is False
     assert v["hash_calculado"] != v["hash_registrado"]
     assert v["error"] is None  # sin error de infra → es alteración real
+
+
+def test_verify_arbitrario_requiere_api_key(client, monkeypatch):
+    """POST /api/verify dispara una consulta a Horizon: no puede ser un proxy abierto."""
+    monkeypatch.setattr(settings, "api_key", "secreta-123")
+    monkeypatch.setattr(
+        "app.api.verify.verify_anchor",
+        lambda tx_hash, hash_hex: {"verified": True, "ledger": 1},
+    )
+    body = {"tx_hash": "abc", "hash_hex": "0" * 64}
+
+    assert client.post("/api/verify", json=body).status_code == 401
+    assert (
+        client.post("/api/verify", json=body, headers={"X-API-Key": "secreta-123"})
+        .status_code
+        == 200
+    )
+
+
+# --- validación de entrada (antes de tocar la base de datos) ------------------
+
+def test_rechaza_fecha_con_formato_invalido(client):
+    """La fecha viaja como texto en el payload canónico: se valida el formato."""
+    assert (
+        client.post("/api/lotes", json=payload_lote(fecha_cosecha="14/03/2027")).status_code
+        == 422
+    )
+    assert (
+        client.post("/api/lotes", json=payload_lote(fecha_cosecha="2027-13-45")).status_code
+        == 422
+    )
+    assert (
+        client.post(
+            "/api/lotes", json=payload_lote(fecha_postura="no-es-una-fecha")
+        ).status_code
+        == 422
+    )
+
+
+def test_rechaza_campos_mas_largos_que_su_columna(client):
+    """Sin esto el valor cruzaría Pydantic y estallaría como DataError → 500."""
+    assert (
+        client.post(
+            "/api/lotes", json=payload_lote(linea_productiva="x" * 81)
+        ).status_code
+        == 422
+    )
+    assert client.post("/api/lotes", json=payload_lote(unidad="y" * 33)).status_code == 422
+    assert (
+        client.post("/api/lotes", json=payload_lote(linea_productiva="")).status_code == 422
+    )
+
+
+def test_rechaza_descripcion_de_evento_demasiado_larga(client):
+    codigo = client.post("/api/lotes", json=payload_lote()).json()["codigo"]
+    res = client.post(
+        f"/api/lotes/{codigo}/eventos",
+        json={
+            "tipo": "empaque",
+            "fecha": "2027-03-14T09:00:00-05:00",
+            "descripcion": "z" * 2001,
+        },
+    )
+    assert res.status_code == 422
+
+
+# --- colisión concurrente de código -------------------------------------------
+
+def test_reintenta_si_el_codigo_propuesto_ya_esta_ocupado(client, monkeypatch):
+    """Dos peticiones simultáneas pueden proponer el mismo código secuencial."""
+    from app.services import lotes as servicio
+
+    assert client.post("/api/lotes", json=payload_lote()).json()["codigo"] == "HUE-2027-001"
+
+    original = servicio.siguiente_codigo
+    intentos = {"n": 0}
+
+    def _colisiona_una_vez(db, fecha):
+        intentos["n"] += 1
+        return "HUE-2027-001" if intentos["n"] == 1 else original(db, fecha)
+
+    monkeypatch.setattr(servicio, "siguiente_codigo", _colisiona_una_vez)
+
+    res = client.post("/api/lotes", json=payload_lote())
+    assert res.status_code == 201
+    assert res.json()["codigo"] == "HUE-2027-002"
+    assert intentos["n"] == 2
+
+
+def test_colision_persistente_responde_409_y_no_deja_fotos_huerfanas(client, monkeypatch):
+    from app.services import lotes as servicio
+
+    borradas: list[str] = []
+    monkeypatch.setattr(servicio.storage, "delete_evidence", borradas.append)
+    # Siempre propone el mismo código: agota los reintentos.
+    monkeypatch.setattr(servicio, "siguiente_codigo", lambda db, fecha: "HUE-2027-001")
+
+    assert client.post("/api/lotes", json=payload_lote()).status_code == 201
+    assert client.post("/api/lotes", json=payload_lote()).status_code == 409
+
+    # La evidencia de la operación fallida se retira de R2 en lugar de quedar
+    # huérfana sin ningún lote que la referencie.
+    assert borradas
+    assert all(k.startswith("evidencias/") for k in borradas)

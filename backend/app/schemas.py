@@ -6,6 +6,7 @@ Los nombres de campo replican exactamente los tipos de ``frontend/lib/types.ts``
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Literal
 
@@ -14,6 +15,14 @@ from pydantic import BaseModel, Field, field_validator
 # Máximos confirmados para evidencia (HU-01): 6 fotos de hasta 10 MB c/u.
 MAX_FOTOS = 6
 MAX_TAMANO_FOTO = 10_000_000
+
+# Los límites de longitud replican los de las columnas del modelo (String(80),
+# String(32), String(40)). Sin ellos un valor más largo cruzaría la validación
+# y estallaría en la base de datos como un DataError → 500 en vez de 422.
+MAX_LINEA = 80
+MAX_UNIDAD = 32
+MAX_DESCRIPCION = 2_000
+MAX_FECHA_EVENTO = 40
 
 TipoEvento = Literal["cosecha", "clasificacion", "empaque", "despacho"]
 
@@ -25,18 +34,37 @@ class FotoIn(BaseModel):
 
 
 class LoteCreateIn(BaseModel):
-    fecha_cosecha: str
-    fecha_postura: str | None = None
-    linea_productiva: str
-    cantidad: int = Field(gt=0)
-    unidad: str
+    # ``pattern`` valida el formato ANTES de tocar la base de datos. La fecha se
+    # guarda como texto (String(10)) porque entra en el payload canónico del
+    # hash; sin el patrón un valor arbitrario se persistiría sin rechazo.
+    fecha_cosecha: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$", max_length=10)
+    fecha_postura: str | None = Field(
+        default=None, pattern=r"^\d{4}-\d{2}-\d{2}$", max_length=10
+    )
+    linea_productiva: str = Field(min_length=1, max_length=MAX_LINEA)
+    cantidad: int = Field(gt=0, le=2_147_483_647)
+    unidad: str = Field(min_length=1, max_length=MAX_UNIDAD)
     fotos: list[FotoIn] = Field(default_factory=list, max_length=MAX_FOTOS)
+
+    @field_validator("fecha_cosecha", "fecha_postura")
+    @classmethod
+    def _fecha_existe(cls, value: str | None) -> str | None:
+        """Rechaza fechas imposibles (2027-13-45) manteniendo el formato texto."""
+        if value is None:
+            return value
+        from datetime import date
+
+        try:
+            date.fromisoformat(value)
+        except ValueError as exc:
+            raise ValueError(f"Fecha inválida: {value}") from exc
+        return value
 
 
 class EventoIn(BaseModel):
     tipo: TipoEvento
-    fecha: str
-    descripcion: str
+    fecha: str = Field(min_length=1, max_length=MAX_FECHA_EVENTO)
+    descripcion: str = Field(min_length=1, max_length=MAX_DESCRIPCION)
 
 
 class EvidenciaOut(BaseModel):
