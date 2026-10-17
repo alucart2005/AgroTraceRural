@@ -38,6 +38,10 @@
       "command": ["npx", "-y", "@yawlabs/postgres-mcp"],
       "environment": { "DATABASE_URL": "{env:DATABASE_URL}" },
       "enabled": false
+    },
+    "neon": {
+      "type": "remote",
+      "url": "https://mcp.neon.tech/mcp"
     }
   }
 }

@@ -1,24 +1,40 @@
 # Blueprint de Render para el backend de AgroTrace Rural.
-# En Render: New → Blueprint → elegir este repositorio; el servicio se crea
-# con este archivo. Los valores con `sync: false` se completan en el panel
-# (Settings → Environment) la primera vez: DATABASE_URL (Neon) y secretos.
+#
+# En Render: New → Blueprint → elegir este repositorio; el servicio se crea con
+# este archivo. Los valores con `sync: false` se completan en el panel
+# (Settings → Environment) la primera vez.
+#
+# IMPORTANTE — por qué el backend va en Render y NO en Vercel:
+# las funciones serverless de Vercel (plan Hobby) se cortan a los 10 s, y el
+# anclaje en Stellar puede superarlo con holgura (Friendbot + espera + 3
+# reintentos). Además el filesystem de Vercel es efímero, así que un SQLite
+# allí solo sirve de instantánea de solo lectura que se pierde en cada deploy.
 services:
   - type: web
     name: agrotrace-backend
     runtime: docker
     rootDir: backend
     plan: free
+    # Región igual a la del proyecto Neon (aws-us-west-2) para minimizar la
+    # latencia entre la API y la base de datos.
+    region: oregon
     healthCheckPath: /api/health
     envVars:
-      # Base de datos (Neon Postgres) — pegar el connection string en el panel.
+      # Base de datos: proyecto Neon "agrotrace" (aws-us-west-2).
+      # Pegar el connection string DEL POOLER (el que termina en -pooler):
+      # el servicio web hace muchas conexiones cortas y el endpoint directo
+      # agotaría las conexiones simultáneas del plan gratuito.
       - key: DATABASE_URL
         sync: false
-      # API key de escritura (X-API-Key); el valor se genera y se copia a
-      # Vercel como NEXT_PUBLIC_API_KEY.
+      # API key de escritura (header X-API-Key).
+      # ATENCIÓN: el frontend la necesita en el navegador, así que se publica
+      # como NEXT_PUBLIC_API_KEY y CUALQUIER visitante puede leerla en el
+      # bundle JS. Solo disuade usos accidentales; no es un secreto real.
       - key: API_KEY
         generateValue: true
-      # Cuenta Stellar Testnet — se generan con `python -m scripts.stellar_account create`
-      # y se pegan en el panel; la clave secreta jamás viaja al repositorio.
+      # Cuenta Stellar Testnet — se generan con
+      # `python -m scripts.stellar_account create` y se pegan en el panel;
+      # la clave secreta jamás viaja al repositorio.
       - key: STELLAR_NETWORK
         value: testnet
       - key: HORIZON_URL
@@ -38,6 +54,8 @@ services:
         value: agrotrace-evidence
       - key: R2_PUBLIC_URL
         sync: false
-      # Origen permitido (CORS) del frontend de Vercel.
+      # Origen permitido (CORS) del frontend de Vercel. El frontend llama al
+      # backend DIRECTAMENTE con NEXT_PUBLIC_API_URL: no hay rewrite en
+      # vercel.json porque Vercel no interpola variables de entorno allí.
       - key: FRONTEND_URL
         value: https://frontend-2mx1.vercel.app
