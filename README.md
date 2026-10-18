@@ -7,10 +7,13 @@
 [![Trazabilidad](https://img.shields.io/badge/Traceability-QR%20%2B%20SHA--256-orange)](#)
 [![Colombia](https://img.shields.io/badge/Made%20in-Colombia-yellow)](#)
 [![Vercel](https://img.shields.io/badge/Deployed-Vercel-black)](https://frontend-2mx1.vercel.app)
+[![Backend](https://img.shields.io/badge/Backend-FastAPI%20on%20Render-0d9488)](https://agrotrace-backend-z3q1.onrender.com)
+[![Tests](https://img.shields.io/badge/Backend-50%20tests%20pytest-brightgreen)](#-cómo-ejecutar-el-proyecto)
 
 > 🌐 **¡La app ya está en línea! / The app is live! / O app já está no ar!**
-> 👉 **[https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
-
+> 👉 **Frontend:** **[https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
+> ⚙️ **API (backend):** **[https://agrotrace-backend-z3q1.onrender.com](https://agrotrace-backend-z3q1.onrender.com)**
+> ⚙️ **Video Publico:** **[https://www.youtube.com/watch?v=JcqA1V8VEL8](https://www.youtube.com/watch?v=JcqA1V8VEL8)**
 ---
 
 ## 🇪🇸 Español
@@ -144,6 +147,8 @@ Esto reduce costos y protege la información sensible. La información operativa
                          |
                       CLIENTE
 ```
+
+> **Infraestructura real:** frontend en **Vercel** (Next.js 14) · backend **FastAPI** en **Render** (Docker) · base de datos en **Neon Postgres** · evidencias en **Cloudflare R2** (compatible S3) · anclaje en **Stellar Testnet**, donde viaja **solo el hash SHA-256** como *Memo Hash*. En desarrollo local: SQLite y modo demo en el navegador.
 
 ---
 
@@ -334,10 +339,24 @@ La plataforma **no reemplaza** los registros oficiales: es una **capa tecnológi
 
 ### 🚀 Cómo ejecutar el proyecto
 
-> 🌐 **¡La aplicación está desplegada en Vercel!** No necesitas instalar nada para usarla:
-> **[https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
+> 🌐 **¡La aplicación está desplegada!** No necesitas instalar nada para usarla:
+> **Frontend:** [https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app) · **API:** [https://agrotrace-backend-z3q1.onrender.com](https://agrotrace-backend-z3q1.onrender.com)
 
-**Requisitos:** Node.js 20+ · Git · (opcional) Python 3.11+ para el backend FastAPI.
+#### 🧰 Stack tecnológico
+
+| Capa | Tecnología |
+|---|---|
+| Frontend | Next.js 14 (App Router) · React 18 · TypeScript · Tailwind CSS · `qrcode.react` |
+| Backend | FastAPI · SQLAlchemy 2 · Alembic · Pydantic Settings · `stellar-sdk` · `boto3` |
+| Base de datos | Neon Postgres (producción) · SQLite local (desarrollo) |
+| Almacenamiento | Cloudflare R2 (evidencias **fuera** de la blockchain) |
+| Blockchain | Stellar Testnet — solo el SHA-256 viaja on-chain, como *Memo Hash* |
+| Despliegue | Vercel (frontend) · Render + Docker (backend) |
+| Pruebas | 50 tests pytest (R2 y Stellar simulados, sin red) |
+
+#### 1) Frontend (`frontend/`)
+
+**Requisitos:** Node.js 20+ · Git.
 
 ```bash
 git clone https://github.com/alucart2005/AgroTraceRural.git
@@ -346,11 +365,45 @@ npm install
 npm run dev        # abre http://localhost:3000
 ```
 
-- **Modo demo (por defecto):** sin backend configurado, el frontend usa datos de ejemplo en el navegador. Recorre el flujo completo: `/productor/nuevo` (HU-01) → etiqueta QR (HU-04) → `/lote/HUE-2027-001` con verificación on-chain (HU-03).
-- **Con backend:** copia `frontend/.env.example` a `frontend/.env.local` y define `NEXT_PUBLIC_API_URL` (FastAPI) y `NEXT_PUBLIC_SITE_URL`.
+- **Modo demo (por defecto):** sin backend configurado, el frontend usa datos de ejemplo en el navegador (localStorage) y lo **anuncia en la interfaz**. Recorre el flujo completo: `/productor/nuevo` (HU-01) → etiqueta QR (HU-04) → `/lote/HUE-2027-001` con verificación on-chain (HU-03). Las escrituras nunca se guardan en modo fantasma.
+- **Con backend:** copia `frontend/.env.example` a `frontend/.env.local` y define `NEXT_PUBLIC_API_URL` (FastAPI, **sin sufijo `/api`**: `http://localhost:8000`), `NEXT_PUBLIC_API_KEY` y `NEXT_PUBLIC_SITE_URL`.
+- **Verificación:** no hay ejecutor de tests en el frontend; validar con `npm run lint` y `npm run build` (el build es también la comprobación de tipos).
 - **Build de producción:** `npm run build && npm run start` dentro de `frontend/`.
-- **Despliegue en Vercel:** importa el repo → **Root Directory: `frontend`** → Framework Next.js (auto-detectado) → agrega las env vars → Deploy.
-- **Documentación:** [`docs/semana3/Documentacion.md`](docs/semana3/Documentacion.md) (cómo funciona el front) · [`docs/semana3/StellarContratos.md`](docs/semana3/StellarContratos.md) (ventajas del ecosistema Stellar).
+
+#### 2) Backend (`backend/`)
+
+**Requisitos:** Python 3.10+ (el contenedor de producción usa 3.11).
+
+```bash
+cd AgroTraceRural/backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # completa Stellar, R2, API_KEY y DATABASE_URL
+uvicorn app.main:app --reload # abre http://localhost:8000/docs (Swagger)
+```
+
+- **Base de datos:** si `DATABASE_URL` está vacía se usa **SQLite local** (`agrotrace_local.db`, ignorado por git). En producción va la URL de **Neon**; en Render usa el *pooler* (el que termina en `-pooler`). Migraciones: `alembic upgrade head`.
+- **Pruebas:** `python -m pytest -q` → **50 tests** con R2 y Stellar simulados (sin red, sin base de datos externa).
+- **Stellar (opcional):** `python -m scripts.stellar_account create` genera y fondea la cuenta de Testnet; `python -m scripts.anchor_demo` ancla y verifica de verdad (crea una transacción real).
+
+#### 3) API
+
+| Método | Ruta | Auth | Historia |
+|---|---|---|---|
+| `GET` | `/api/health` | — | Health check |
+| `POST` | `/api/lotes` | `X-API-Key` | HU-01 |
+| `GET` | `/api/lotes` · `/api/lotes/{codigo}` | — | HU-05 / HU-02 |
+| `GET`/`POST` | `/api/lotes/{codigo}/eventos` | GET abierto · POST con clave | HU-05 |
+| `POST` | `/api/lotes/{codigo}/anclar` | `X-API-Key` | Reintento de anclaje |
+| `GET` | `/api/verify/{codigo}` | — | HU-03 |
+
+Las lecturas quedan abiertas para que el QR del consumidor funcione sin credenciales; solo las escrituras exigen `X-API-Key`.
+
+#### 4) Despliegue
+
+- **Frontend → Vercel:** importa el repo → **Root Directory: `frontend`** → Framework Next.js (auto-detectado) → agrega las env vars → Deploy. Cambiar `NEXT_PUBLIC_*` obliga a *redeploy* (van embebidas en el bundle).
+- **Backend → Render:** `render.yaml` define el servicio Docker; el CMD migra con Alembic antes de arrancar. Completar en Settings → Environment: `DATABASE_URL` (pooler de Neon), claves Stellar y R2, y `FRONTEND_URL` (CORS).
+- **Documentación:** [`AGENTS.md`](AGENTS.md) (comandos y reglas del repo) · [`docs/semana3/Documentacion.md`](docs/semana3/Documentacion.md) (cómo funciona el front) · [`docs/semana3/StellarContratos.md`](docs/semana3/StellarContratos.md) (ventajas del ecosistema Stellar).
 
 ---
 
@@ -493,6 +546,8 @@ This reduces costs and protects sensitive information. Operational information r
                          |
                       CUSTOMER
 ```
+
+> **Real infrastructure:** frontend on **Vercel** (Next.js 14) · **FastAPI** backend on **Render** (Docker) · database on **Neon Postgres** · evidence on **Cloudflare R2** (S3-compatible) · anchoring on **Stellar Testnet**, where only the **SHA-256 hash** travels as a *Memo Hash*. In local development: SQLite and browser demo mode.
 
 ---
 
@@ -683,10 +738,24 @@ The platform **does not replace** official records: it is a **complementary tech
 
 ### 🚀 How to run the project
 
-> 🌐 **The application is deployed on Vercel!** You don't need to install anything to use it:
-> **[https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
+> 🌐 **The application is deployed!** You don't need to install anything to use it:
+> **Frontend:** [https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app) · **API:** [https://agrotrace-backend-z3q1.onrender.com](https://agrotrace-backend-z3q1.onrender.com)
 
-**Requirements:** Node.js 20+ · Git · (optional) Python 3.11+ for the FastAPI backend.
+#### 🧰 Tech stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 14 (App Router) · React 18 · TypeScript · Tailwind CSS · `qrcode.react` |
+| Backend | FastAPI · SQLAlchemy 2 · Alembic · Pydantic Settings · `stellar-sdk` · `boto3` |
+| Database | Neon Postgres (production) · local SQLite (development) |
+| Storage | Cloudflare R2 (evidence kept **off** the blockchain) |
+| Blockchain | Stellar Testnet — only the SHA-256 hash travels on-chain, as a *Memo Hash* |
+| Deployment | Vercel (frontend) · Render + Docker (backend) |
+| Testing | 50 pytest tests (mocked R2 and Stellar, no network) |
+
+#### 1) Frontend (`frontend/`)
+
+**Requirements:** Node.js 20+ · Git.
 
 ```bash
 git clone https://github.com/alucart2005/AgroTraceRural.git
@@ -695,11 +764,45 @@ npm install
 npm run dev        # open http://localhost:3000
 ```
 
-- **Demo mode (default):** with no backend configured, the frontend uses sample data in the browser. Walk the full flow: `/productor/nuevo` (HU-01) → QR label (HU-04) → `/lote/HUE-2027-001` with on-chain verification (HU-03).
-- **With a backend:** copy `frontend/.env.example` to `frontend/.env.local` and set `NEXT_PUBLIC_API_URL` (FastAPI) and `NEXT_PUBLIC_SITE_URL`.
+- **Demo mode (default):** with no backend configured, the frontend uses sample data in the browser (localStorage) and **announces it in the UI**. Walk the full flow: `/productor/nuevo` (HU-01) → QR label (HU-04) → `/lote/HUE-2027-001` with on-chain verification (HU-03). Writes are never silently stored in demo mode.
+- **With a backend:** copy `frontend/.env.example` to `frontend/.env.local` and set `NEXT_PUBLIC_API_URL` (FastAPI, **without the `/api` suffix**: `http://localhost:8000`), `NEXT_PUBLIC_API_KEY` and `NEXT_PUBLIC_SITE_URL`.
+- **Verification:** there is no test runner in the frontend; validate with `npm run lint` and `npm run build` (the build is also the type check).
 - **Production build:** `npm run build && npm run start` inside `frontend/`.
-- **Vercel deployment:** import the repo → **Root Directory: `frontend`** → Next.js framework (auto-detected) → add env vars → Deploy.
-- **Documentation:** [`docs/semana3/Documentacion.md`](docs/semana3/Documentacion.md) (how the frontend works) · [`docs/semana3/StellarContratos.md`](docs/semana3/StellarContratos.md) (Stellar ecosystem advantages).
+
+#### 2) Backend (`backend/`)
+
+**Requirements:** Python 3.10+ (the production container uses 3.11).
+
+```bash
+cd AgroTraceRural/backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # fill in Stellar, R2, API_KEY and DATABASE_URL
+uvicorn app.main:app --reload # open http://localhost:8000/docs (Swagger)
+```
+
+- **Database:** with an empty `DATABASE_URL` a **local SQLite** is used (`agrotrace_local.db`, git-ignored). In production it points to **Neon**; on Render use the *pooler* URL (the one ending in `-pooler`). Migrations: `alembic upgrade head`.
+- **Tests:** `python -m pytest -q` → **50 tests** with mocked R2 and Stellar (no network, no external database).
+- **Stellar (optional):** `python -m scripts.stellar_account create` generates and funds the Testnet account; `python -m scripts.anchor_demo` anchors and verifies for real (creates a live transaction).
+
+#### 3) API
+
+| Method | Route | Auth | Story |
+|---|---|---|---|
+| `GET` | `/api/health` | — | Health check |
+| `POST` | `/api/lotes` | `X-API-Key` | HU-01 |
+| `GET` | `/api/lotes` · `/api/lotes/{codigo}` | — | HU-05 / HU-02 |
+| `GET`/`POST` | `/api/lotes/{codigo}/eventos` | GET open · POST with key | HU-05 |
+| `POST` | `/api/lotes/{codigo}/anclar` | `X-API-Key` | Anchoring retry |
+| `GET` | `/api/verify/{codigo}` | — | HU-03 |
+
+Reads stay open so the consumer QR works without credentials; only writes require `X-API-Key`.
+
+#### 4) Deployment
+
+- **Frontend → Vercel:** import the repo → **Root Directory: `frontend`** → Next.js framework (auto-detected) → add env vars → Deploy. Changing `NEXT_PUBLIC_*` requires a *redeploy* (they are inlined into the bundle).
+- **Backend → Render:** `render.yaml` defines the Docker service; its CMD runs Alembic migrations before serving. Fill in Settings → Environment: `DATABASE_URL` (Neon pooler), Stellar and R2 keys, and `FRONTEND_URL` (CORS).
+- **Documentation:** [`AGENTS.md`](AGENTS.md) (repo commands and rules) · [`docs/semana3/Documentacion.md`](docs/semana3/Documentacion.md) (how the frontend works) · [`docs/semana3/StellarContratos.md`](docs/semana3/StellarContratos.md) (Stellar ecosystem advantages).
 
 ---
 
@@ -842,6 +945,8 @@ Isso reduz custos e protege informações sensíveis. A informação operacional
                          |
                       CLIENTE
 ```
+
+> **Infraestrutura real:** frontend no **Vercel** (Next.js 14) · backend **FastAPI** no **Render** (Docker) · banco de dados no **Neon Postgres** · evidências no **Cloudflare R2** (compatível com S3) · ancoragem na **Stellar Testnet**, onde viaja **apenas o hash SHA-256** como *Memo Hash*. Em desenvolvimento local: SQLite e modo demo no navegador.
 
 ---
 
@@ -1032,10 +1137,24 @@ A plataforma **não substitui** os registros oficiais: é uma **camada tecnológ
 
 ### 🚀 Como executar o projeto
 
-> 🌐 **O aplicativo está implantado no Vercel!** Você não precisa instalar nada para usá-lo:
-> **[https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
+> 🌐 **O aplicativo está implantado!** Você não precisa instalar nada para usá-lo:
+> **Frontend:** [https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app) · **API:** [https://agrotrace-backend-z3q1.onrender.com](https://agrotrace-backend-z3q1.onrender.com)
 
-**Requisitos:** Node.js 20+ · Git · (opcional) Python 3.11+ para o backend FastAPI.
+#### 🧰 Stack tecnológica
+
+| Camada | Tecnologia |
+|---|---|
+| Frontend | Next.js 14 (App Router) · React 18 · TypeScript · Tailwind CSS · `qrcode.react` |
+| Backend | FastAPI · SQLAlchemy 2 · Alembic · Pydantic Settings · `stellar-sdk` · `boto3` |
+| Banco de dados | Neon Postgres (produção) · SQLite local (desenvolvimento) |
+| Armazenamento | Cloudflare R2 (evidências **fora** da blockchain) |
+| Blockchain | Stellar Testnet — apenas o hash SHA-256 viaja on-chain, como *Memo Hash* |
+| Implantação | Vercel (frontend) · Render + Docker (backend) |
+| Testes | 50 testes pytest (R2 e Stellar simulados, sem rede) |
+
+#### 1) Frontend (`frontend/`)
+
+**Requisitos:** Node.js 20+ · Git.
 
 ```bash
 git clone https://github.com/alucart2005/AgroTraceRural.git
@@ -1044,11 +1163,45 @@ npm install
 npm run dev        # abra http://localhost:3000
 ```
 
-- **Modo demo (padrão):** sem backend configurado, o frontend usa dados de exemplo no navegador. Percorra o fluxo completo: `/productor/nuevo` (HU-01) → etiqueta QR (HU-04) → `/lote/HUE-2027-001` com verificação on-chain (HU-03).
-- **Com backend:** copie `frontend/.env.example` para `frontend/.env.local` e defina `NEXT_PUBLIC_API_URL` (FastAPI) e `NEXT_PUBLIC_SITE_URL`.
+- **Modo demo (padrão):** sem backend configurado, o frontend usa dados de exemplo no navegador (localStorage) e **anuncia isso na interface**. Percorra o fluxo completo: `/productor/nuevo` (HU-01) → etiqueta QR (HU-04) → `/lote/HUE-2027-001` com verificação on-chain (HU-03). As gravações nunca são salvas silenciosamente no modo fantasma.
+- **Com backend:** copie `frontend/.env.example` para `frontend/.env.local` e defina `NEXT_PUBLIC_API_URL` (FastAPI, **sem sufixo `/api`**: `http://localhost:8000`), `NEXT_PUBLIC_API_KEY` e `NEXT_PUBLIC_SITE_URL`.
+- **Verificação:** não há executor de testes no frontend; valide com `npm run lint` e `npm run build` (o build também é a checagem de tipos).
 - **Build de produção:** `npm run build && npm run start` dentro de `frontend/`.
-- **Implantação no Vercel:** importe o repo → **Root Directory: `frontend`** → framework Next.js (detectado automaticamente) → adicione as env vars → Deploy.
-- **Documentação:** [`docs/semana3/Documentacion.md`](docs/semana3/Documentacion.md) (como funciona o frontend) · [`docs/semana3/StellarContratos.md`](docs/semana3/StellarContratos.md) (vantagens do ecossistema Stellar).
+
+#### 2) Backend (`backend/`)
+
+**Requisitos:** Python 3.10+ (o contêiner de produção usa 3.11).
+
+```bash
+cd AgroTraceRural/backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # preencha Stellar, R2, API_KEY e DATABASE_URL
+uvicorn app.main:app --reload # abra http://localhost:8000/docs (Swagger)
+```
+
+- **Banco de dados:** com `DATABASE_URL` vazio usa-se **SQLite local** (`agrotrace_local.db`, ignorado pelo git). Em produção aponta para **Neon**; no Render use a URL do *pooler* (a que termina em `-pooler`). Migrações: `alembic upgrade head`.
+- **Testes:** `python -m pytest -q` → **50 testes** com R2 e Stellar simulados (sem rede, sem banco externo).
+- **Stellar (opcional):** `python -m scripts.stellar_account create` gera e financia a conta de Testnet; `python -m scripts.anchor_demo` ancora e verifica de verdade (cria uma transação real).
+
+#### 3) API
+
+| Método | Rota | Auth | História |
+|---|---|---|---|
+| `GET` | `/api/health` | — | Health check |
+| `POST` | `/api/lotes` | `X-API-Key` | HU-01 |
+| `GET` | `/api/lotes` · `/api/lotes/{codigo}` | — | HU-05 / HU-02 |
+| `GET`/`POST` | `/api/lotes/{codigo}/eventos` | GET aberto · POST com chave | HU-05 |
+| `POST` | `/api/lotes/{codigo}/anclar` | `X-API-Key` | Nova tentativa de ancoragem |
+| `GET` | `/api/verify/{codigo}` | — | HU-03 |
+
+As leituras ficam abertas para que o QR do consumidor funcione sem credenciais; apenas as gravações exigem `X-API-Key`.
+
+#### 4) Implantação
+
+- **Frontend → Vercel:** importe o repositório → **Root Directory: `frontend`** → framework Next.js (detectado automaticamente) → adicione as env vars → Deploy. Alterar `NEXT_PUBLIC_*` exige um *redeploy* (ficam embutidas no bundle).
+- **Backend → Render:** `render.yaml` define o serviço Docker; o CMD roda as migrações do Alembic antes de servir. Preencha em Settings → Environment: `DATABASE_URL` (pooler do Neon), chaves Stellar e R2, e `FRONTEND_URL` (CORS).
+- **Documentação:** [`AGENTS.md`](AGENTS.md) (comandos e regras do repositório) · [`docs/semana3/Documentacion.md`](docs/semana3/Documentacion.md) (como funciona o frontend) · [`docs/semana3/StellarContratos.md`](docs/semana3/StellarContratos.md) (vantagens do ecossistema Stellar).
 
 ---
 
