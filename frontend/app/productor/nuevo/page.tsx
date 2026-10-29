@@ -5,6 +5,16 @@ import { useState } from "react";
 import type { Lote } from "@/lib/types";
 import { LINEAS_PRODUCTIVAS } from "@/lib/types";
 import { registrarLote } from "@/lib/api";
+import ProtegerProductor from "@/components/ProtegerProductor";
+
+export default function NuevoLotePage() {
+  // HU-06/HU-08: sin sesión (o sin perfil completo) no se llega al formulario.
+  return (
+    <ProtegerProductor>
+      <FormularioLote />
+    </ProtegerProductor>
+  );
+}
 
 interface EvidenciaLocal {
   file: File;
@@ -60,7 +70,7 @@ function formatarBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function NuevoLotePage() {
+function FormularioLote() {
   const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
   const [fechaPostura, setFechaPostura] = useState(
     () => new Date().toISOString().slice(0, 10)

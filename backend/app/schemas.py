@@ -120,3 +120,51 @@ class VerificacionOut(BaseModel):
     # inaccesible o lote aún sin anclar. Si es ``None`` y ``verificado`` es
     # False, los datos fueron alterados.
     error: str | None = None
+
+
+# --- Autenticación con Google (HU-06, HU-07) --------------------------------
+
+MAX_NOMBRE = 120
+MAX_CEDULA = 20
+MAX_TELEFONO = 32
+
+
+class GoogleLoginIn(BaseModel):
+    # ID token que entrega Google Identity Services en el navegador (popup).
+    id_token: str = Field(min_length=16, max_length=8192)
+
+
+class UsuarioOut(BaseModel):
+    id: str
+    email: str
+    nombre: str
+    foto_url: str | None = None
+    cedula: str | None = None
+    telefono: str | None = None
+    finca: str | None = None
+    municipio: str | None = None
+    perfil_completo: bool = False
+
+    @classmethod
+    def de(cls, usuario) -> "UsuarioOut":
+        """Parte de ``usuario.como_dict()`` (incluye la propiedad del perfil)."""
+        return cls(**usuario.como_dict())
+
+
+class SesionOut(BaseModel):
+    token: str
+    usuario: UsuarioOut
+
+
+class PerfilIn(BaseModel):
+    """Los 5 datos obligatorios del primer ingreso (HU-07).
+
+    Los límites replican las columnas del modelo: sin ellos un valor más largo
+    cruzaría Pydantic y estallaría en la base como DataError → 500 en vez de 422.
+    """
+
+    nombre: str = Field(min_length=1, max_length=MAX_NOMBRE)
+    cedula: str = Field(min_length=1, max_length=MAX_CEDULA)
+    telefono: str = Field(min_length=1, max_length=MAX_TELEFONO)
+    finca: str = Field(min_length=1, max_length=80)
+    municipio: str = Field(min_length=1, max_length=80)

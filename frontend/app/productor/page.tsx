@@ -1,23 +1,43 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { listarLotes, modoDemoActivo } from "@/lib/api";
+import { ApiError, listarMisLotes, modoDemoActivo } from "@/lib/api";
 import type { Lote } from "@/lib/types";
 import AvisoModoDemo from "@/components/AvisoModoDemo";
+import ProtegerProductor from "@/components/ProtegerProductor";
 
 export default function ProductorPage() {
+  return (
+    <ProtegerProductor>
+      <MisLotes />
+    </ProtegerProductor>
+  );
+}
+
+function MisLotes() {
+  const router = useRouter();
   const [lotes, setLotes] = useState<Lote[] | null>(null);
   const [demo, setDemo] = useState(false);
 
   useEffect(() => {
-    listarLotes().then((l) => {
-      // Se lee inmediatamente después del await, antes de que otra llamada
-      // pueda reemplazar el marcador.
-      setDemo(modoDemoActivo());
-      setLotes(l);
-    });
-  }, []);
+    listarMisLotes()
+      .then((l) => {
+        // Se lee inmediatamente después del await, antes de que otra llamada
+        // pueda reemplazar el marcador.
+        setDemo(modoDemoActivo());
+        setLotes(l);
+      })
+      .catch((err) => {
+        // Sesión rechazada por el backend (borrada/expirada de verdad): fuera.
+        if (err instanceof ApiError && err.status === 401) {
+          router.replace("/login");
+          return;
+        }
+        setLotes([]);
+      });
+  }, [router]);
 
   return (
     <div className="space-y-6">

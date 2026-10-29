@@ -82,12 +82,13 @@ def _nombre_seguro(nombre: str) -> str:
     return base.replace(" ", "_")
 
 
-def crear_lote(db: Session, datos) -> Lote:
+def crear_lote(db: Session, datos, usuario_id: str | None = None) -> Lote:
     """Crea el lote completo. ``datos`` es un ``LoteCreateIn``.
 
-    Las fotos se suben UNA sola vez (la clave R2 depende del ``uuid`` del lote,
-    no del código) y solo se reintenta el INSERT, que es lo que puede chocar
-    por el índice único de ``codigo``.
+    ``usuario_id`` es el productor autenticado que lo registra (HU-08); queda
+    FUERA del hash canónico. Las fotos se suben UNA sola vez (la clave R2
+    depende del ``uuid`` del lote, no del código) y solo se reintenta el INSERT,
+    que es lo que puede chocar por el índice único de ``codigo``.
     """
     lote_id = str(uuid.uuid4())
     evidencias = [{"nombre": f.nombre, "tamano": f.tamano} for f in datos.fotos]
@@ -112,7 +113,9 @@ def crear_lote(db: Session, datos) -> Lote:
     for intento in range(INTENTOS_CODIGO):
         codigo = siguiente_codigo(db, datos.fecha_cosecha)
         try:
-            lote = _persistir(db, datos, lote_id, codigo, fotos, evidencias)
+            lote = _persistir(
+                db, datos, lote_id, codigo, fotos, evidencias, usuario_id
+            )
         except IntegrityError as exc:
             db.rollback()
             log.warning("Colisión de código %s (intento %s)", codigo, intento + 1)
@@ -139,7 +142,13 @@ def _limpiar(claves: list[str]) -> None:
 
 
 def _persistir(
-    db: Session, datos, lote_id: str, codigo: str, fotos: list[str], evidencias: list[dict]
+    db: Session,
+    datos,
+    lote_id: str,
+    codigo: str,
+    fotos: list[str],
+    evidencias: list[dict],
+    usuario_id: str | None = None,
 ) -> Lote:
     """Calcula el hash canónico y guarda lote + evento inicial de cosecha."""
     # hash canónico (mismo payload que calcula el navegador)
@@ -169,6 +178,7 @@ def _persistir(
         fotos=fotos,
         evidencias=evidencias,
         hash_sha256=hash_hex,
+        usuario_id=usuario_id,
     )
     lote.eventos.append(
         Evento(

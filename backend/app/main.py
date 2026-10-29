@@ -3,10 +3,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import health, lotes, verify
+from app.api import auth, health, lotes, verify
 from app.core.config import settings
-from app.db import Base, engine
-from app.models import Evento, Lote  # noqa: F401 — registra las tablas en Base.metadata
+from app.db import Base, asegurar_columnas_sqlite, engine
+from app.models import Evento, Lote, Usuario  # noqa: F401 — registra las tablas
 
 ORIGENES_PUBLICOS = (
     "https://frontend-2mx1.vercel.app",  # producción (Vercel)
@@ -16,9 +16,11 @@ ORIGENES_PUBLICOS = (
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    # SQLite local: crea el esquema si no existe. En Render el esquema lo
+    # SQLite local: crea el esquema si no existe y agrega columnas que
+    # create_all no añade a tablas ya existentes. En Render el esquema lo
     # define Alembic (``alembic upgrade head``) antes de arrancar.
     Base.metadata.create_all(bind=engine)
+    asegurar_columnas_sqlite()
     yield
 
 
@@ -34,5 +36,6 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
+app.include_router(auth.router)
 app.include_router(verify.router)
 app.include_router(lotes.router)

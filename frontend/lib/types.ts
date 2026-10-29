@@ -60,3 +60,25 @@ export const LINEAS_PRODUCTIVAS = [
   "Pescado Tilapia",
   "Frutales varios",
 ];
+
+// --- Autenticación con Google (HU-06, HU-07) ---------------------------------
+
+/** Shape exacto de ``UsuarioOut`` del backend. */
+export interface Usuario {
+  id: string;
+  email: string;
+  nombre: string;
+  foto_url: string | null;
+  cedula: string | null;
+  telefono: string | null;
+  finca: string | null;
+  municipio: string | null;
+  /** false → el primer ingreso aún no diligencia los 5 datos (HU-07). */
+  perfil_completo: boolean;
+}
+
+/** Respuesta de ``POST /api/auth/google``: JWT + productor. */
+export interface Sesion {
+  token: string;
+  usuario: Usuario;
+}

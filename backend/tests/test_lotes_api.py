@@ -109,30 +109,63 @@ def test_falla_en_stellar_conserva_el_lote(client, monkeypatch):
     assert reanclado.json()["stellar_tx_hash"] == "tx-reintento"
 
 
-# --- API key (solo escrituras) ----------------------------------------------
+# --- API key vs sesión de productor --------------------------------------------
 
-def test_escrituras_requieren_api_key(client, monkeypatch):
+def test_crear_lote_exige_sesion_y_no_acepta_api_key(sin_sesion, monkeypatch):
+    """HU-08: la X-API-Key es pública (va en el bundle JS); crear lote exige JWT."""
     monkeypatch.setattr(settings, "api_key", "secreta-123")
 
-    assert client.post("/api/lotes", json=payload_lote()).status_code == 401
+    # Sin credenciales → 401.
+    assert sin_sesion.post("/api/lotes", json=payload_lote()).status_code == 401
+    # Con la clave pública pero sin sesión → sigue prohibido: no es una puerta
+    # trasera para registrar lotes de forma anónima.
     assert (
-        client.post(
+        sin_sesion.post(
             "/api/lotes",
             json=payload_lote(),
-            headers={"X-API-Key": "incorrecta"},
+            headers={"X-API-Key": "secreta-123"},
         ).status_code
         == 401
     )
-    ok = client.post(
-        "/api/lotes",
-        json=payload_lote(),
+    # Y las lecturas siguen abiertas (el QR del consumidor no lleva credenciales).
+    assert sin_sesion.get("/api/lotes").status_code == 200
+
+
+def test_api_key_sigue_para_eventos_ancla_y_verify(sin_sesion, sesion, monkeypatch):
+    """Solo las escrituras internas sin usuario detrás conservan la X-API-Key."""
+    monkeypatch.setattr(settings, "api_key", "secreta-123")
+    codigo = sin_sesion.post(
+        "/api/lotes", json=payload_lote(), headers=sesion
+    ).json()["codigo"]
+
+    evento = {
+        "tipo": "empaque",
+        "fecha": "2027-03-14T09:00:00-05:00",
+        "descripcion": "10 cubetas en caja con etiqueta QR.",
+    }
+    assert (
+        sin_sesion.post(f"/api/lotes/{codigo}/eventos", json=evento).status_code
+        == 401
+    )
+    ok_evento = sin_sesion.post(
+        f"/api/lotes/{codigo}/eventos",
+        json=evento,
         headers={"X-API-Key": "secreta-123"},
     )
-    assert ok.status_code == 201
+    assert ok_evento.status_code == 200
 
-    # lecturas siguen abiertas (el QR del consumidor no lleva credenciales)
-    assert client.get("/api/lotes").status_code == 200
-    assert client.get(f"/api/lotes/{ok.json()['codigo']}").status_code == 200
+    assert sin_sesion.post(f"/api/lotes/{codigo}/anclar").status_code == 401
+    assert (
+        sin_sesion.post(
+            f"/api/lotes/{codigo}/anclar", headers={"X-API-Key": "secreta-123"}
+        ).status_code
+        == 200
+    )
+
+    # Las lecturas públicas no piden nada.
+    assert sin_sesion.get("/api/lotes").status_code == 200
+    assert sin_sesion.get(f"/api/lotes/{codigo}").status_code == 200
+    assert sin_sesion.get(f"/api/verify/{codigo}").status_code == 200
 
 
 # --- HU-02 / HU-05: lecturas y eventos ---------------------------------------

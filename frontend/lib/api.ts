@@ -1,6 +1,7 @@
-import type { Lote, Verificacion } from "./types";
+import type { Lote, Sesion, Usuario, Verificacion } from "./types";
 import { payloadDeLote, hashLote } from "./hash";
 import { crearLote, ensureSeed, guardarEvento } from "./demoStore";
+import { cerrarSesion, tokenActual } from "./auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
@@ -28,11 +29,15 @@ export class ApiError extends Error {
 }
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = tokenActual();
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
       ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
+      // Sesión del productor (HU-06). Sin token no se envía la cabecera: el
+      // backend responde 401 y la UI lo trata como "no hay sesión".
+      ...(token && token !== "demo" ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
   });
@@ -149,4 +154,70 @@ export async function verificarLote(codigo: string): Promise<Verificacion | null
     ledger: lote.stellar_ledger,
     demo: !!lote.demo,
   };
+}
+
+// --- Autenticación con Google (HU-06, HU-07) ---------------------------------
+
+/**
+ * Intercambia el ID token de Google por la sesión de AgroTrace.
+ *
+ * NO tiene fallback demo: sin backend el error se muestra y la pantalla de
+ * login ofrece entrar en modo demo de forma explícita (nunca de forma silenciosa).
+ */
+export async function loginConGoogle(idToken: string): Promise<Sesion> {
+  if (!API_URL) {
+    throw new ApiError(0, "No hay backend configurado; usa el modo demo.");
+  }
+  return fetchJson<Sesion>("/api/auth/google", {
+    method: "POST",
+    body: JSON.stringify({ id_token: idToken }),
+  });
+}
+
+/** Perfil del productor autenticado (requiere sesión en localStorage). */
+export async function obtenerYo(): Promise<Usuario> {
+  return fetchJson<Usuario>("/api/auth/me");
+}
+
+/** Guarda los 5 datos del primer ingreso (HU-07). */
+export async function actualizarPerfil(datos: {
+  nombre: string;
+  cedula: string;
+  telefono: string;
+  finca: string;
+  municipio: string;
+}): Promise<Usuario> {
+  return fetchJson<Usuario>("/api/auth/me", {
+    method: "PUT",
+    body: JSON.stringify(datos),
+  });
+}
+
+/**
+ * "Mis lotes": solo los registrados por el productor autenticado (HU-08).
+ * Al igual que ``listarLotes``, un backend caído cae al almacén local pero
+ * dejándolo marcado con ``modoDemoActivo()``. Un 401 NO cae en demo: rompe la
+ * sesión y se propaga para que la pantalla mande al usuario a /login.
+ */
+export async function listarMisLotes(): Promise<Lote[]> {
+  // Sin backend, o con la sesión sintética de demo, no se consulta la API:
+  // se va al almacén local siempre marcado como demo (un token "demo" nunca
+  // debe viajar al backend, que lo rechazaría con 401).
+  if (!API_URL || tokenActual() === "demo") {
+    _modoDemo = true;
+    return ensureSeed();
+  }
+  try {
+    const lotes = await fetchJson<Lote[]>("/api/lotes/mios");
+    _modoDemo = false;
+    return lotes;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) {
+      _modoDemo = false;
+      cerrarSesion();
+      throw err;
+    }
+    _modoDemo = true;
+    return ensureSeed();
+  }
 }

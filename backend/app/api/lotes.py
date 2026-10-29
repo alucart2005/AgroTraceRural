@@ -9,9 +9,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_api_key
+from app.api.deps import require_api_key, require_productor
 from app.db import get_db
 from app.models.lote import Evento, Lote
+from app.models.usuario import Usuario
 from app.schemas import EventoIn, EventoOut, LoteCreateIn, LoteOut, VerificacionOut
 from app.services import lotes as servicio
 from app.services.lotes import CodigoNoDisponible
@@ -21,6 +22,8 @@ from app.services.storage import StorageError
 
 router = APIRouter()
 
+# Escrituras internas sin usuario detrás (eventos, anclaje, auditoría de tx):
+# siguen con la X-API-Key. El registro de lotes NO está aquí: exige sesión.
 ESCRITURA = [Depends(require_api_key)]
 
 
@@ -32,12 +35,18 @@ def _obtener(db: Session, codigo: str) -> Lote:
 
 
 @router.post(
-    "/api/lotes", response_model=LoteOut, status_code=201, dependencies=ESCRITURA
+    "/api/lotes",
+    response_model=LoteOut,
+    status_code=201,
 )
-def crear_lote(datos: LoteCreateIn, db: Session = Depends(get_db)):
-    """HU-01: registrar lote con evidencia fotográfica y anclarlo en Stellar."""
+def crear_lote(
+    datos: LoteCreateIn,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(require_productor),
+):
+    """HU-01/HU-08: registrar lote con sesión del productor y anclarlo."""
     try:
-        return servicio.crear_lote(db, datos)
+        return servicio.crear_lote(db, datos, usuario_id=usuario.id)
     except CodigoNoDisponible as exc:
         # Colisión concurrente del código secuencial: se pide reintentar.
         raise HTTPException(status_code=409, detail=str(exc)) from exc
@@ -49,8 +58,28 @@ def crear_lote(datos: LoteCreateIn, db: Session = Depends(get_db)):
 
 @router.get("/api/lotes", response_model=list[LoteOut])
 def listar_lotes(db: Session = Depends(get_db)):
-    """HU-05: listado para el buscador del productor."""
+    """HU-05: listado para el buscador (público, incluye lotes de todos)."""
     return db.scalars(select(Lote).order_by(Lote.created_at.desc())).all()
+
+
+@router.get(
+    "/api/lotes/mios",
+    response_model=list[LoteOut],
+)
+def listar_mis_lotes(
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(require_productor),
+):
+    """HU-08: "Mis lotes" solo muestra los registrados por el productor."""
+    return db.scalars(
+        select(Lote)
+        .where(Lote.usuario_id == usuario.id)
+        .order_by(Lote.created_at.desc())
+    ).all()
+
+
+# IMPORTANTE: /api/lotes/mios debe declararse ANTES de /api/lotes/{codigo},
+# o "mios" se capturaría como si fuera el código de un lote (404).
 
 
 @router.get("/api/lotes/{codigo}", response_model=LoteOut)

@@ -38,6 +38,11 @@ class Lote(Base):
     hash_sha256: Mapped[str] = mapped_column(String(64))
     stellar_tx_hash: Mapped[str | None] = mapped_column(String(64))
     stellar_ledger: Mapped[int | None] = mapped_column(Integer)
+    # Productor que lo registró (HU-08). Queda FUERA del hash canónico y es
+    # nullable: los lotes previos a la autenticación no tienen dueño.
+    usuario_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("usuarios.id", ondelete="SET NULL"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_ahora, server_default=func.now()
     )

@@ -42,3 +42,22 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def asegurar_columnas_sqlite() -> None:
+    """Añade al SQLite local las columnas que ``create_all`` no altera.
+
+    ``Base.metadata.create_all`` crea tablas NUEVAS pero nunca modifica las ya
+    existentes, y en desarrollo local no se corre Alembic. Sin este paso, un
+    SQLite de antes de la autenticación carecería de ``lotes.usuario_id`` y el
+    registro de lotes fallaría con ``OperationalError``. En Postgres (Neon) el
+    esquema lo define Alembic, así que esto no aplica.
+    """
+    from sqlalchemy import inspect, text
+
+    if engine.url.get_backend_name() != "sqlite":
+        return
+    with engine.begin() as conn:
+        columnas = {c["name"] for c in inspect(conn).get_columns("lotes")}
+        if "usuario_id" not in columnas:
+            conn.execute(text("ALTER TABLE lotes ADD COLUMN usuario_id VARCHAR(36)"))

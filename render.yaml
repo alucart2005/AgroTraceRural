@@ -32,6 +32,17 @@ services:
       # bundle JS. Solo disuade usos accidentales; no es un secreto real.
       - key: API_KEY
         generateValue: true
+      # Google OAuth (HU-06): Client ID de Google Cloud Console (pantalla de
+      # consentimiento + orígenes autorizados). El popup NO usa el secret.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      # Secreto de los JWT de sesión (HS256). Generar con `openssl rand -hex 32`
+      # y pegarlo en el panel. NO use generateValue: un valor nuevo en cada
+      # deploy cerraría la sesión de todos los productores.
+      - key: AUTH_SECRET
+        sync: false
       # Cuenta Stellar Testnet — se generan con
       # `python -m scripts.stellar_account create` y se pegan en el panel;
       # la clave secreta jamás viaja al repositorio.

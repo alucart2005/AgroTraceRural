@@ -23,6 +23,15 @@ class Settings(BaseSettings):
     # API key de escritura (header X-API-Key). Vacío → API abierta (dev local).
     api_key: str = ""
 
+    # Google OAuth (HU-06): verifica el ID token que entrega el botón de Google
+    # en el navegador. El flujo popup NO usa el secret (solo el client_id), pero
+    # se configura por si se añade el intercambio de código más adelante.
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    # Secreto con el que el backend firma sus propios JWT de sesión (HS256).
+    # Generar con `openssl rand -hex 32`; vacío → el login responde 503.
+    auth_secret: str = ""
+
     @field_validator("database_url", mode="before")
     @classmethod
     def _normalizar_postgres(cls, valor: str) -> str:
