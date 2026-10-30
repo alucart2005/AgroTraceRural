@@ -1,7 +1,7 @@
 # 📋 Backlog: Autenticación con Google — AgroTrace Rural
 
 > **Feature:** Ingreso de productores con Google + registro de lotes autenticado · **Continúa:** HU-01, HU-05
-> **Patrón:** `docs/semana2/KanbanBacklog.md` · Listo para crear como GitHub Issues #6, #7 y #8 (formato `docs/backlog/IssuesListos.md`)
+> **Patrón:** `docs/semana2/KanbanBacklog.md` · Creado como GitHub Issues [#6](https://github.com/alucart2005/AgroTraceRural/issues/6), [#7](https://github.com/alucart2005/AgroTraceRural/issues/7) y [#8](https://github.com/alucart2005/AgroTraceRural/issues/8) (formato `docs/backlog/IssuesListos.md`)
 
 > 🌐 **Idioma / Language:** [🇪🇸 Español](#-español) · [🇺🇸 English](#-english) · [🇧🇷 Português](#-português)
 
@@ -107,31 +107,31 @@
 ### 📌 Tareas técnicas (no son HU)
 
 **Google Cloud Console (manual):**
-- [ ] Pantalla de consentimiento OAuth (modo testing) + Client ID "Web application" con orígenes autorizados `http://localhost:3000` y `https://frontend-2mx1.vercel.app`.
+- [x] Pantalla de consentimiento OAuth (modo testing) + Client ID "Web application" con orígenes autorizados `http://localhost:3000` y `https://frontend-2mx1.vercel.app`. *(origen de Vercel verificado en producción; `http://localhost:3000` queda por confirmar al probar en local)*
 
 **Backend (`backend/`):**
-- [ ] Modelo `Usuario` (`google_sub` único, email, nombre, foto_url, cédula, teléfono, finca, municipio) + FK `usuario_id` en `lotes`.
-- [ ] Migración Alembic `0002_usuarios`.
-- [ ] `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SECRET` en `core/config.py`, `.env.example` y `render.yaml`.
-- [ ] `services/auth.py`: verificación del ID token con `google-auth` + JWT propio con PyJWT (exp ~30 días).
-- [ ] Router `api/auth.py`: `POST /api/auth/google`, `GET /api/auth/me`, `PUT /api/auth/me`.
-- [ ] `require_productor` en `api/deps.py`; `POST /api/lotes` pasa de `X-API-Key` a sesión Google (eventos/ancla/verify conservan la clave).
-- [ ] Tests: token Google mockeado, `401` sin sesión, flujo de completar perfil.
+- [x] Modelo `Usuario` (`google_sub` único, email, nombre, foto_url, cédula, teléfono, finca, municipio) + FK `usuario_id` en `lotes`.
+- [x] Migración Alembic `0002_usuarios`.
+- [x] `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SECRET` en `core/config.py`, `.env.example` y `render.yaml`.
+- [x] `services/auth.py`: verificación del ID token con `google-auth` + JWT propio con PyJWT (exp ~30 días).
+- [x] Router `api/auth.py`: `POST /api/auth/google`, `GET /api/auth/me`, `PUT /api/auth/me`.
+- [x] `require_productor` en `api/deps.py`; `POST /api/lotes` pasa de `X-API-Key` a sesión Google (eventos/ancla/verify conservan la clave).
+- [x] Tests: token Google mockeado, `401` sin sesión, flujo de completar perfil.
 
 **Frontend (`frontend/`):**
-- [ ] `lib/auth.ts` (JWT en `localStorage`, detección de expiración) y `lib/api.ts` (header `Authorization: Bearer`, `loginConGoogle`, `obtenerYo`, `actualizarPerfil`).
-- [ ] Página `/login` con botón de Google Identity Services (popup).
-- [ ] Página `/productor/completar` (formulario de 5 campos).
-- [ ] Guard client-side en `/productor/*` → redirección a `/login`.
-- [ ] `Nav.tsx`: "Iniciar sesión" / avatar + "Salir"; sesión "demo" cuando el backend no responde.
+- [x] `lib/auth.ts` (JWT en `localStorage`, detección de expiración) y `lib/api.ts` (header `Authorization: Bearer`, `loginConGoogle`, `obtenerYo`, `actualizarPerfil`).
+- [x] Página `/login` con botón de Google Identity Services (popup).
+- [x] Página `/productor/completar` (formulario de 5 campos).
+- [x] Guard client-side en `/productor/*` → redirección a `/login`.
+- [x] `Nav.tsx`: "Iniciar sesión" / avatar + "Salir"; sesión "demo" cuando el backend no responde.
 
 **Variables y despliegue:**
-- [ ] Render: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SECRET`.
-- [ ] Vercel: `NEXT_PUBLIC_GOOGLE_CLIENT_ID` + **redeploy** (se inlina en el build).
+- [x] Render: `GOOGLE_CLIENT_ID` + `AUTH_SECRET` seteados en el panel; `GOOGLE_CLIENT_SECRET` queda vacío a propósito (el popup no usa el secret).
+- [x] Vercel: `NEXT_PUBLIC_GOOGLE_CLIENT_ID` + **redeploy** (se inlina en el build).
 
 **Verificación:**
-- [ ] `.venv/bin/python -m pytest -q` (50 actuales + nuevos) · `npm run lint` · `npm run build`.
-- [ ] ⚠️ **No tocar** `CAMPOS_LOTE` en `app/services/sha256.py` ni `frontend/lib/hash.ts` (paridad del hash HU-03).
+- [x] `.venv/bin/python -m pytest -q` (71 tests) · `npm run lint` · `npm run build`.
+- [x] ⚠️ **No tocar** `CAMPOS_LOTE` en `app/services/sha256.py` ni `frontend/lib/hash.ts` (paridad del hash HU-03).
 
 **Nota sobre HU-01:** su Escenario 1 ya asume "el productor ha iniciado sesión"; con esta feature esa precondición pasa de ser ficticia a ser obligatoria. No requiere reescribir la HU, solo tenerla presente.
 
@@ -237,31 +237,31 @@
 ### 📌 Technical tasks (not user stories)
 
 **Google Cloud Console (manual):**
-- [ ] OAuth consent screen (testing mode) + "Web application" Client ID with authorized origins `http://localhost:3000` and `https://frontend-2mx1.vercel.app`.
+- [x] OAuth consent screen (testing mode) + "Web application" Client ID with authorized origins `http://localhost:3000` and `https://frontend-2mx1.vercel.app`. *(Vercel origin verified in production; `http://localhost:3000` still pending confirmation in local testing)*
 
 **Backend (`backend/`):**
-- [ ] `Usuario` model (`google_sub` unique, email, name, photo, national ID, phone, farm, municipality) + `usuario_id` FK on `lotes`.
-- [ ] Alembic migration `0002_usuarios`.
-- [ ] `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SECRET` in `core/config.py`, `.env.example` and `render.yaml`.
-- [ ] `services/auth.py`: ID token verification with `google-auth` + own JWT with PyJWT (~30 days expiry).
-- [ ] `api/auth.py` router: `POST /api/auth/google`, `GET /api/auth/me`, `PUT /api/auth/me`.
-- [ ] `require_productor` in `api/deps.py`; `POST /api/lotes` switches from `X-API-Key` to Google session (events/anchor/verify keep the key).
-- [ ] Tests: mocked Google token, `401` without session, profile-completion flow.
+- [x] `Usuario` model (`google_sub` unique, email, name, photo, national ID, phone, farm, municipality) + `usuario_id` FK on `lotes`.
+- [x] Alembic migration `0002_usuarios`.
+- [x] `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SECRET` in `core/config.py`, `.env.example` and `render.yaml`.
+- [x] `services/auth.py`: ID token verification with `google-auth` + own JWT with PyJWT (~30 days expiry).
+- [x] `api/auth.py` router: `POST /api/auth/google`, `GET /api/auth/me`, `PUT /api/auth/me`.
+- [x] `require_productor` in `api/deps.py`; `POST /api/lotes` switches from `X-API-Key` to Google session (events/anchor/verify keep the key).
+- [x] Tests: mocked Google token, `401` without session, profile-completion flow.
 
 **Frontend (`frontend/`):**
-- [ ] `lib/auth.ts` (JWT in `localStorage`, expiry check) and `lib/api.ts` (`Authorization: Bearer` header, `loginConGoogle`, `obtenerYo`, `actualizarPerfil`).
-- [ ] `/login` page with Google Identity Services button (popup).
-- [ ] `/productor/completar` page (5-field form).
-- [ ] Client-side guard on `/productor/*` → redirect to `/login`.
-- [ ] `Nav.tsx`: "Sign in" / avatar + "Sign out"; "demo" session when the backend is down.
+- [x] `lib/auth.ts` (JWT in `localStorage`, expiry check) and `lib/api.ts` (`Authorization: Bearer` header, `loginConGoogle`, `obtenerYo`, `actualizarPerfil`).
+- [x] `/login` page with Google Identity Services button (popup).
+- [x] `/productor/completar` page (5-field form).
+- [x] Client-side guard on `/productor/*` → redirect to `/login`.
+- [x] `Nav.tsx`: "Sign in" / avatar + "Sign out"; "demo" session when the backend is down.
 
 **Environment and deployment:**
-- [ ] Render: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SECRET`.
-- [ ] Vercel: `NEXT_PUBLIC_GOOGLE_CLIENT_ID` + **redeploy** (inlined at build time).
+- [x] Render: `GOOGLE_CLIENT_ID` + `AUTH_SECRET` set in the dashboard; `GOOGLE_CLIENT_SECRET` intentionally left empty (the popup does not use the secret).
+- [x] Vercel: `NEXT_PUBLIC_GOOGLE_CLIENT_ID` + **redeploy** (inlined at build time).
 
 **Verification:**
-- [ ] `.venv/bin/python -m pytest -q` (50 current + new) · `npm run lint` · `npm run build`.
-- [ ] ⚠️ **Do not touch** `CAMPOS_LOTE` in `app/services/sha256.py` nor `frontend/lib/hash.ts` (HU-03 hash parity).
+- [x] `.venv/bin/python -m pytest -q` (71 tests) · `npm run lint` · `npm run build`.
+- [x] ⚠️ **Do not touch** `CAMPOS_LOTE` in `app/services/sha256.py` nor `frontend/lib/hash.ts` (HU-03 hash parity).
 
 **Note on HU-01:** its Scenario 1 already assumes "the farmer has signed in"; with this feature that precondition stops being fictional and becomes mandatory. No rewrite needed, just keep it in mind.
 
@@ -367,30 +367,30 @@
 ### 📌 Tarefas técnicas (não são HU)
 
 **Google Cloud Console (manual):**
-- [ ] Tela de consentimento OAuth (modo testing) + Client ID "Web application" com origens autorizadas `http://localhost:3000` e `https://frontend-2mx1.vercel.app`.
+- [x] Tela de consentimento OAuth (modo testing) + Client ID "Web application" com origens autorizadas `http://localhost:3000` e `https://frontend-2mx1.vercel.app`. *(origem do Vercel verificada em produção; `http://localhost:3000` pendente de confirmação no teste local)*
 
 **Backend (`backend/`):**
-- [ ] Modelo `Usuario` (`google_sub` único, email, nome, foto_url, cédula, telefone, fazenda, município) + FK `usuario_id` em `lotes`.
-- [ ] Migração Alembic `0002_usuarios`.
-- [ ] `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SECRET` em `core/config.py`, `.env.example` e `render.yaml`.
-- [ ] `services/auth.py`: verificação do ID token com `google-auth` + JWT próprio com PyJWT (exp ~30 dias).
-- [ ] Router `api/auth.py`: `POST /api/auth/google`, `GET /api/auth/me`, `PUT /api/auth/me`.
-- [ ] `require_productor` em `api/deps.py`; `POST /api/lotes` passa de `X-API-Key` para sessão Google (eventos/âncora/verify mantêm a chave).
-- [ ] Testes: token Google simulado, `401` sem sessão, fluxo de completar perfil.
+- [x] Modelo `Usuario` (`google_sub` único, email, nome, foto_url, cédula, telefone, fazenda, município) + FK `usuario_id` em `lotes`.
+- [x] Migração Alembic `0002_usuarios`.
+- [x] `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SECRET` em `core/config.py`, `.env.example` e `render.yaml`.
+- [x] `services/auth.py`: verificação do ID token com `google-auth` + JWT próprio com PyJWT (exp ~30 dias).
+- [x] Router `api/auth.py`: `POST /api/auth/google`, `GET /api/auth/me`, `PUT /api/auth/me`.
+- [x] `require_productor` em `api/deps.py`; `POST /api/lotes` passa de `X-API-Key` para sessão Google (eventos/âncora/verify mantêm a chave).
+- [x] Testes: token Google simulado, `401` sem sessão, fluxo de completar perfil.
 
 **Frontend (`frontend/`):**
-- [ ] `lib/auth.ts` (JWT em `localStorage`, detecção de expiração) e `lib/api.ts` (header `Authorization: Bearer`, `loginConGoogle`, `obtenerYo`, `actualizarPerfil`).
-- [ ] Página `/login` com botão do Google Identity Services (popup).
-- [ ] Página `/productor/completar` (formulário de 5 campos).
-- [ ] Guard client-side em `/productor/*` → redireciona para `/login`.
-- [ ] `Nav.tsx`: "Entrar" / avatar + "Sair"; sessão "demo" quando o backend está fora do ar.
+- [x] `lib/auth.ts` (JWT em `localStorage`, detecção de expiração) e `lib/api.ts` (header `Authorization: Bearer`, `loginConGoogle`, `obtenerYo`, `actualizarPerfil`).
+- [x] Página `/login` com botão do Google Identity Services (popup).
+- [x] Página `/productor/completar` (formulário de 5 campos).
+- [x] Guard client-side em `/productor/*` → redireciona para `/login`.
+- [x] `Nav.tsx`: "Entrar" / avatar + "Sair"; sessão "demo" quando o backend está fora do ar.
 
 **Variáveis e implantação:**
-- [ ] Render: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SECRET`.
-- [ ] Vercel: `NEXT_PUBLIC_GOOGLE_CLIENT_ID` + **redeploy** (embutido no build).
+- [x] Render: `GOOGLE_CLIENT_ID` + `AUTH_SECRET` definidos no painel; `GOOGLE_CLIENT_SECRET` mantido vazio de propósito (o popup não usa o secret).
+- [x] Vercel: `NEXT_PUBLIC_GOOGLE_CLIENT_ID` + **redeploy** (embutido no build).
 
 **Verificação:**
-- [ ] `.venv/bin/python -m pytest -q` (50 atuais + novos) · `npm run lint` · `npm run build`.
-- [ ] ⚠️ **Não tocar** em `CAMPOS_LOTE` de `app/services/sha256.py` nem em `frontend/lib/hash.ts` (paridade do hash da HU-03).
+- [x] `.venv/bin/python -m pytest -q` (71 testes) · `npm run lint` · `npm run build`.
+- [x] ⚠️ **Não tocar** em `CAMPOS_LOTE` de `app/services/sha256.py` nem em `frontend/lib/hash.ts` (paridade do hash da HU-03).
 
 **Nota sobre a HU-01:** seu Cenário 1 já pressupõe "o produtor iniciou sessão"; com esta feature a pré-condição deixa de ser fictória e passa a ser obrigatória. Não precisa reescrever a HU, apenas tê-la em mente.
