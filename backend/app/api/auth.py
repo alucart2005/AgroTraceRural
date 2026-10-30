@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_productor
@@ -44,7 +45,18 @@ def login_con_google(datos: GoogleLoginIn, db: Session = Depends(get_db)):
         # Email/foto pueden cambiar en Google: se refrescan en cada ingreso.
         usuario.email = info.get("email") or usuario.email
         usuario.foto_url = info.get("picture") or usuario.foto_url
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # Carrera: dos primeros ingresos simultáneos con el mismo google_sub.
+        # Gana el primero; se descarta el intento y se recupera al ganador.
+        db.rollback()
+        usuario = db.scalar(select(Usuario).where(Usuario.google_sub == info["sub"]))
+        if usuario is None:
+            raise HTTPException(
+                status_code=409,
+                detail="No se pudo completar el registro; intenta de nuevo",
+            )
     db.refresh(usuario)
 
     try:

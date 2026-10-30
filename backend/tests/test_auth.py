@@ -79,6 +79,78 @@ def test_login_rechaza_token_invalido(sin_sesion, monkeypatch):
     assert "inválido" in res.json()["detail"]
 
 
+def test_primer_ingreso_en_carrera_recupera_al_ganador(sin_sesion, db_session, monkeypatch):
+    """Dos primeros ingresos simultáneos con el mismo ``google_sub``.
+
+    El commit del segundo falla por el UNIQUE, pero en vez de estallar en un
+    500 se descarta el intento y se recupera al usuario que ganó la carrera.
+    """
+    from sqlalchemy.exc import IntegrityError
+
+    from app.models.usuario import Usuario
+
+    monkeypatch.setattr(
+        "app.services.auth.verificar_id_token",
+        lambda token: dict(GOOGLE_DE_PRUEBA, sub="sub-carrera"),
+    )
+    commit_real = db_session.commit
+
+    def commit_perdedor():
+        # El intento pendiente nunca llega a la BD (como si el UNIQUE del otro
+        # proceso hubiera ganado); el ganador ya está confirmado.
+        db_session.expunge_all()
+        db_session.add(
+            Usuario(
+                id="ganador-de-la-carrera",
+                google_sub="sub-carrera",
+                email="ganador@guarumo.co",
+                nombre="Ganador de la carrera",
+            )
+        )
+        commit_real()
+        raise IntegrityError(
+            "INSERT INTO usuarios (google_sub) VALUES (?)",
+            {"google_sub": "sub-carrera"},
+            Exception("UNIQUE constraint failed: usuarios.google_sub"),
+        )
+
+    monkeypatch.setattr(db_session, "commit", commit_perdedor)
+
+    res = sin_sesion.post("/api/auth/google", json={"id_token": "tk-de-prueba-123456"})
+
+    assert res.status_code == 200
+    assert res.json()["usuario"]["id"] == "ganador-de-la-carrera"
+    # No quedó ningún duplicado del google_sub.
+    assert (
+        db_session.query(Usuario).filter_by(google_sub="sub-carrera").count() == 1
+    )
+
+
+def test_primer_ingreso_sin_ganador_responde_409(sin_sesion, db_session, monkeypatch):
+    """Si tras el conflicto no hay usuario que recuperar → 409, nunca 500."""
+    from sqlalchemy.exc import IntegrityError
+
+    monkeypatch.setattr(
+        "app.services.auth.verificar_id_token",
+        lambda token: dict(GOOGLE_DE_PRUEBA, sub="sub-raro"),
+    )
+
+    def commit_roto():
+        db_session.expunge_all()
+        raise IntegrityError(
+            "INSERT INTO usuarios (google_sub) VALUES (?)",
+            {"google_sub": "sub-raro"},
+            Exception("UNIQUE constraint failed: usuarios.google_sub"),
+        )
+
+    monkeypatch.setattr(db_session, "commit", commit_roto)
+
+    res = sin_sesion.post("/api/auth/google", json={"id_token": "tk-de-prueba-123456"})
+
+    assert res.status_code == 409
+    assert "intent" in res.json()["detail"]
+
+
 # --- HU-06: sesión (GET /api/auth/me) -------------------------------------------
 
 def test_me_requiere_sesion(sin_sesion):
@@ -204,6 +276,39 @@ def test_perfil_rechaza_campos_vacios_o_largos(sin_sesion, monkeypatch):
     # los 5 campos correctos → 200 y perfil completo
     assert sin_sesion.put("/api/auth/me", json=completo, headers=headers).status_code == 200
     assert sin_sesion.get("/api/auth/me", headers=headers).json()["perfil_completo"] is True
+
+
+def test_perfil_recorta_espacios_y_rechaza_solo_espacios(sin_sesion, monkeypatch):
+    """El API no acepta campos de solo espacios y guarda los valores recortados."""
+    monkeypatch.setattr(
+        "app.services.auth.verificar_id_token",
+        lambda token: dict(GOOGLE_DE_PRUEBA, sub="sub-espacios"),
+    )
+    login = sin_sesion.post(
+        "/api/auth/google", json={"id_token": "tk-de-prueba-123456"}
+    ).json()
+    headers = {"Authorization": f"Bearer {login['token']}"}
+
+    base = {
+        "nombre": "Rosa Productora",
+        "cedula": "70123456",
+        "telefono": "3015551234",
+        "finca": "Finca Guarumo",
+        "municipio": "Cáceres, Antioquia",
+    }
+
+    # Un valor de solo espacios NO cumple min_length=1 tras recortar → 422.
+    blancos = dict(base, telefono="   ")
+    assert sin_sesion.put("/api/auth/me", json=blancos, headers=headers).status_code == 422
+    assert sin_sesion.get("/api/auth/me", headers=headers).json()["perfil_completo"] is False
+
+    # Los valores se guardan ya recortados (sin espacios sobrantes).
+    con_espacios = dict(base, nombre="  Rosa Productora  ", cedula=" 70123456 ")
+    assert sin_sesion.put("/api/auth/me", json=con_espacios, headers=headers).status_code == 200
+    perfil = sin_sesion.get("/api/auth/me", headers=headers).json()
+    assert perfil["nombre"] == "Rosa Productora"
+    assert perfil["cedula"] == "70123456"
+    assert perfil["perfil_completo"] is True
 
 
 def test_actualizar_perfil_requiere_sesion(sin_sesion):

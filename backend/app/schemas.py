@@ -168,3 +168,16 @@ class PerfilIn(BaseModel):
     telefono: str = Field(min_length=1, max_length=MAX_TELEFONO)
     finca: str = Field(min_length=1, max_length=80)
     municipio: str = Field(min_length=1, max_length=80)
+
+    @field_validator(
+        "nombre", "cedula", "telefono", "finca", "municipio", mode="before"
+    )
+    @classmethod
+    def _recorta_espacios(cls, value: object) -> object:
+        """Recorta antes de validar: ``"  "`` no puede cumplir ``min_length=1``.
+
+        Sin esto un valor de solo espacios pasaría la validación (longitud ≥ 1)
+        y quedaría ``perfil_completo = True`` con el campo visualmente vacío.
+        El frontend ya recorta, pero la API debe sostenerlo por sí sola.
+        """
+        return value.strip() if isinstance(value, str) else value
