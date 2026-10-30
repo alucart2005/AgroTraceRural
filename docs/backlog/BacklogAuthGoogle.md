@@ -3,6 +3,10 @@
 > **Feature:** Ingreso de productores con Google + registro de lotes autenticado · **Continúa:** HU-01, HU-05
 > **Patrón:** `docs/semana2/KanbanBacklog.md` · Creado como GitHub Issues [#6](https://github.com/alucart2005/AgroTraceRural/issues/6), [#7](https://github.com/alucart2005/AgroTraceRural/issues/7) y [#8](https://github.com/alucart2005/AgroTraceRural/issues/8) (formato `docs/backlog/IssuesListos.md`)
 
+> ✅ **Estado (2026-10-30):** HU-06, HU-07 y HU-08 **implementadas, desplegadas** (backend en Render, frontend en Vercel) **y verificadas en producción**; los 51 pendientes de este backlog están cerrados y las 3 historias figuran como `Done` en el [tablero del proyecto #14](https://github.com/users/alucart2005/projects/14) con `Priority=P1` y `Size` M/S/S (patrón de HU-04 y HU-05).
+> 🇺🇸 **Status (2026-10-30):** HU-06, HU-07 and HU-08 are **implemented, deployed** (backend on Render, frontend on Vercel) **and verified in production**; all 51 pending tasks in this backlog are closed and the three stories are tracked as `Done` on [project board #14](https://github.com/users/alucart2005/projects/14) with `Priority=P1` and `Size` M/S/S (following the HU-04 and HU-05 pattern).
+> 🇧🇷 **Status (2026-10-30):** HU-06, HU-07 e HU-08 estão **implementadas, implantadas** (backend no Render, frontend na Vercel) **e verificadas em produção**; as 51 pendências deste backlog estão encerradas e as três histórias constam como `Done` no [quadro do projeto #14](https://github.com/users/alucart2005/projects/14) com `Priority=P1` e `Size` M/S/S (padrão de HU-04 e HU-05).
+
 > 🌐 **Idioma / Language:** [🇪🇸 Español](#-español) · [🇺🇸 English](#-english) · [🇧🇷 Português](#-português)
 
 ---
