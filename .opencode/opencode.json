@@ -31,7 +31,9 @@
       "url": "https://mcp.render.com/mcp",
       "enabled": true,
       "oauth": false,
-      "headers": { "Authorization": "Bearer {env:RENDER_API_KEY}" }
+      "headers": {
+        "Authorization": "Bearer {env:RENDER_API_KEY}"
+      }
     },
     "postgres": {
       "type": "local",
