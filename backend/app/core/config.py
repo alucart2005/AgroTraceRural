@@ -1,8 +1,12 @@
 from pydantic import field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    # Declaración moderna (Pydantic V2): la clase interna `Config` está
+    # deprecada y emite PydanticDeprecatedSince20 en cada arranque.
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
     stellar_network: str = "testnet"
     horizon_url: str = "https://horizon-testnet.stellar.org"
     stellar_public_key: str = ""
@@ -50,10 +54,6 @@ class Settings(BaseSettings):
         if valor.startswith("postgresql://"):
             return "postgresql+psycopg://" + valor[len("postgresql://") :]
         return valor
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
 
 
 settings = Settings()
