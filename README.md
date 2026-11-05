@@ -13,7 +13,7 @@
 > 🌐 **¡La app ya está en línea! / The app is live! / O app já está no ar!**
 > 👉 **Frontend:** **[https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
 > ⚙️ **API (backend):** **[https://agrotrace-backend-z3q1.onrender.com](https://agrotrace-backend-z3q1.onrender.com)**
-> ⚙️ **Video Publico:** **[https://www.youtube.com/watch?v=JcqA1V8VEL8](https://www.youtube.com/watch?v=JcqA1V8VEL8)**
+> ⚙️ **Video Publico:** **[https://www.youtube.com/watch?v=stVQCivrmCg](https://www.youtube.com/watch?v=stVQCivrmCg)**
 ---
 
 ## 🇪🇸 Español
