@@ -1,4 +1,4 @@
-# 🌱 Agro Cassis
+# 🌱 AgroTrace Rural
 
 > 🌐 **Idioma / Language:** [🇪🇸 Español](#-español) · [🇺🇸 English](#-english) · [🇧🇷 Português](#-português)
 
@@ -14,7 +14,7 @@ Los consumidores no pueden conocer ni verificar de manera sencilla el origen y e
 
 #### 💡 Por qué elegimos este
 
-El equipo se inclinó por este problema porque encaja con los criterios de la Sesión 1: el productor, los intermediarios y el consumidor son partes que no se confían entre sí y necesitan consultar el mismo registro de un lote, y el histórico de evidencias (fotos, fechas, procesos) debe conservarse sin cambios que no queden registrados. Además es un problema real del equipo en Agro Cassis, con evidencia observable en la operación diaria.
+El equipo se inclinó por este problema porque encaja con los criterios de la Sesión 1: el productor, los intermediarios y el consumidor son partes que no se confían entre sí y necesitan consultar el mismo registro de un lote, y el histórico de evidencias (fotos, fechas, procesos) debe conservarse sin cambios que no queden registrados. Además es un problema real del equipo en AgroTrace Rural, con evidencia observable en la operación diaria.
 
 #### ❌ Propuestas descartadas
 
@@ -30,7 +30,7 @@ El equipo realizó una **votación** entre las propuestas presentadas y la propu
 
 ### 📌 Encabezado
 
-**Proyecto:** Agro Cassis  
+**Proyecto:** AgroTrace Rural
 
 > 💡 **Problema:** Los consumidores tienen dificultades para conocer y verificar de manera sencilla el origen y el proceso de producción de los productos agrícolas que compran.
 
@@ -56,7 +56,7 @@ El equipo realizó una **votación** entre las propuestas presentadas y la propu
   - Jefferson Cabrera — \[usuario de GitHub pendiente\]
   - Napoleon de Jesus Anaya Romero — `alucart2005`
   - Diego Martínez — \[usuario de GitHub pendiente\]
-- **Rol:** Programación / Informes *(según [Roles.md](Roles.md))*
+- **Rol:** Programación / Informes _(según [Roles.md](Roles.md))_
 - **Responsable de entregas:** Napoleon de Jesus Anaya Romero
 - **Canal de coordinación interna:** GitHub Issues
 
@@ -66,7 +66,7 @@ El equipo realizó una **votación** entre las propuestas presentadas y la propu
 
 En la comercialización de productos agrícolas existe una dificultad para que el consumidor pueda conocer y verificar de manera sencilla el origen del producto, su lote y parte de la información relacionada con su proceso de producción. Para un pequeño productor, mantener esta información organizada también puede representar trabajo adicional, especialmente cuando se utilizan registros manuales, fotografías, documentos y conversaciones independientes.
 
-En el contexto de **Agro Cassis**, esta situación es relevante porque la producción integra diferentes actividades: huevos, pescado, frutas, carne y otros productos agrícolas. Cada producto puede tener diferentes lotes, fechas, procesos y evidencias.
+En el contexto de **AgroTrace Rural**, esta situación es relevante porque la producción integra diferentes actividades: huevos, pescado, frutas, carne y otros productos agrícolas. Cada producto puede tener diferentes lotes, fechas, procesos y evidencias.
 
 La frecuencia del problema puede presentarse cada vez que se produce, clasifica, almacena, transporta o comercializa un lote y se necesita demostrar su procedencia.
 
@@ -133,7 +133,7 @@ Se prioriza esta oportunidad porque conecta directamente al productor con el con
 
 > 🔒 La hipótesis inicial es que **un registro verificable y difícil de alterar podría aumentar la confianza en la información de trazabilidad**.
 
-En Agro Cassis, cada lote podría tener un identificador único. Los registros y evidencias se almacenarían en el sistema y se generaría una huella digital mediante **SHA-256**. Una referencia de esa huella podría registrarse en Stellar, mientras que fotografías y videos permanecerían almacenados fuera de la cadena.
+En AgroTrace Rural, cada lote podría tener un identificador único. Los registros y evidencias se almacenarían en el sistema y se generaría una huella digital mediante **SHA-256**. Una referencia de esa huella podría registrarse en Stellar, mientras que fotografías y videos permanecerían almacenados fuera de la cadena.
 
 El consumidor escanearía un QR y consultaría información como origen, lote, fecha y evidencias disponibles.
 
@@ -149,7 +149,7 @@ El criterio principal identificado es:
 
 > ✅ **Varias partes necesitan compartir un registro verificable y existe interés en preservar el histórico de los registros.**
 
-Una base de datos tradicional podría resolver gran parte del problema cuando existe una única organización responsable de administrar toda la información. Por esta razón, Agro Cassis no plantea utilizar blockchain para todos los datos.
+Una base de datos tradicional podría resolver gran parte del problema cuando existe una única organización responsable de administrar toda la información. Por esta razón, AgroTrace Rural no plantea utilizar blockchain para todos los datos.
 
 La blockchain se utilizaría únicamente donde aporte una característica adicional: **demostrar que determinada información o evidencia existía en un momento determinado y que posteriormente no fue modificada sin dejar evidencia del cambio**.
 
@@ -187,7 +187,7 @@ Consumers cannot easily know or verify the origin and the production process of 
 
 #### 💡 Why we chose this
 
-The team leaned toward this problem because it fits Session 1's criteria: the producer, the intermediaries and the consumer are parties that do not trust each other and need to consult the same batch record, and the history of evidence (photos, dates, processes) must be kept without untracked changes. It is also a real problem for the team at Agro Cassis, with evidence observable in daily operations.
+The team leaned toward this problem because it fits Session 1's criteria: the producer, the intermediaries and the consumer are parties that do not trust each other and need to consult the same batch record, and the history of evidence (photos, dates, processes) must be kept without untracked changes. It is also a real problem for the team at AgroTrace Rural, with evidence observable in daily operations.
 
 #### ❌ Discarded proposals
 
@@ -203,7 +203,7 @@ The team held a **vote** among the submitted proposals and the traceability prop
 
 ### 📌 Header
 
-**Project:** Agro Cassis  
+**Project:** AgroTrace Rural
 
 > 💡 **Problem:** Consumers have difficulty knowing and easily verifying the origin and the production process of the agricultural products they buy.
 
@@ -229,7 +229,7 @@ The team held a **vote** among the submitted proposals and the traceability prop
   - Jefferson Cabrera — \[GitHub username pending\]
   - Napoleon de Jesus Anaya Romero — `alucart2005`
   - Diego Martínez — \[GitHub username pending\]
-- **Role:** Programming / Reports *(per [Roles.md](Roles.md))*
+- **Role:** Programming / Reports _(per [Roles.md](Roles.md))_
 - **Deliverables owner:** Napoleon de Jesus Anaya Romero
 - **Internal coordination channel:** GitHub Issues
 
@@ -239,7 +239,7 @@ The team held a **vote** among the submitted proposals and the traceability prop
 
 In the marketing of agricultural products, there is a difficulty for consumers to know and easily verify the origin of the product, its batch, and part of the information related to its production process. For a small producer, keeping this information organized can also represent additional work, especially when manual records, photographs, documents, and separate conversations are used.
 
-In the context of **Agro Cassis**, this situation is relevant because production involves different activities: eggs, fish, fruit, meat, and other agricultural products. Each product may have different batches, dates, processes, and evidence.
+In the context of **AgroTrace Rural**, this situation is relevant because production involves different activities: eggs, fish, fruit, meat, and other agricultural products. Each product may have different batches, dates, processes, and evidence.
 
 The frequency of the problem may arise every time a batch is produced, classified, stored, transported, or marketed and its provenance needs to be demonstrated.
 
@@ -306,7 +306,7 @@ This opportunity is prioritized because it directly connects producer and consum
 
 > 🔒 The initial hypothesis is that **a verifiable and hard-to-alter record could increase confidence in traceability information**.
 
-In Agro Cassis, each batch could have a unique identifier. Records and evidence would be stored in the system and a digital fingerprint would be generated using **SHA-256**. A reference to that fingerprint could be registered on Stellar, while photographs and videos would remain stored off-chain.
+In AgroTrace Rural, each batch could have a unique identifier. Records and evidence would be stored in the system and a digital fingerprint would be generated using **SHA-256**. A reference to that fingerprint could be registered on Stellar, while photographs and videos would remain stored off-chain.
 
 The consumer would scan a QR code and access information such as origin, batch, date, and available evidence.
 
@@ -322,7 +322,7 @@ The main criterion identified is:
 
 > ✅ **Multiple parties need to share a verifiable record and there is an interest in preserving the history of the records.**
 
-A traditional database could solve much of the problem when there is a single organization responsible for managing all the information. For this reason, Agro Cassis does not plan to use blockchain for all data.
+A traditional database could solve much of the problem when there is a single organization responsible for managing all the information. For this reason, AgroTrace Rural does not plan to use blockchain for all data.
 
 Blockchain would be used only where it provides an additional feature: **proving that certain information or evidence existed at a given time and that it was not subsequently modified without leaving evidence of the change**.
 
@@ -360,7 +360,7 @@ Os consumidores não conseguem conhecer nem verificar de forma simples a origem 
 
 #### 💡 Por que escolhemos este
 
-A equipe inclinou-se por este problema porque ele atende aos critérios da Sessão 1: o produtor, os intermediários e o consumidor são partes que não confiam umas nas outras e precisam consultar o mesmo registro de um lote, e o histórico de evidências (fotos, datas, processos) deve ser preservado sem alterações não registradas. Além disso, é um problema real da equipe na Agro Cassis, com evidência observável na operação diária.
+A equipe inclinou-se por este problema porque ele atende aos critérios da Sessão 1: o produtor, os intermediários e o consumidor são partes que não confiam umas nas outras e precisam consultar o mesmo registro de um lote, e o histórico de evidências (fotos, datas, processos) deve ser preservado sem alterações não registradas. Além disso, é um problema real da equipe na AgroTrace Rural, com evidência observável na operação diária.
 
 #### ❌ Propostas descartadas
 
@@ -376,7 +376,7 @@ A equipe realizou uma **votação** entre as propostas apresentadas e a proposta
 
 ### 📌 Cabeçalho
 
-**Projeto:** Agro Cassis  
+**Projeto:** AgroTrace Rural
 
 > 💡 **Problema:** Os consumidores têm dificuldade em conhecer e verificar de forma simples a origem e o processo de produção dos produtos agrícolas que compram.
 
@@ -402,7 +402,7 @@ A equipe realizou uma **votação** entre as propostas apresentadas e a proposta
   - Jefferson Cabrera — \[usuário do GitHub pendente\]
   - Napoleon de Jesus Anaya Romero — `alucart2005`
   - Diego Martínez — \[usuário do GitHub pendente\]
-- **Função:** Programação / Relatórios *(segundo [Roles.md](Roles.md))*
+- **Função:** Programação / Relatórios _(segundo [Roles.md](Roles.md))_
 - **Responsável pelas entregas:** Napoleon de Jesus Anaya Romero
 - **Canal de coordenação interna:** GitHub Issues
 
@@ -412,7 +412,7 @@ A equipe realizou uma **votação** entre as propostas apresentadas e a proposta
 
 Na comercialização de produtos agrícolas existe uma dificuldade para que o consumidor possa conhecer e verificar de forma simples a origem do produto, seu lote e parte da informação relacionada ao seu processo de produção. Para um pequeno produtor, manter essa informação organizada também pode representar trabalho adicional, especialmente quando se utilizam registros manuais, fotografias, documentos e conversas independentes.
 
-No contexto da **Agro Cassis**, essa situação é relevante porque a produção integra diferentes atividades: ovos, peixes, frutas, carne e outros produtos agrícolas. Cada produto pode ter diferentes lotes, datas, processos e evidências.
+No contexto da **AgroTrace Rural**, essa situação é relevante porque a produção integra diferentes atividades: ovos, peixes, frutas, carne e outros produtos agrícolas. Cada produto pode ter diferentes lotes, datas, processos e evidências.
 
 A frequência do problema pode ocorrer sempre que um lote é produzido, classificado, armazenado, transportado ou comercializado e é necessário demonstrar sua procedência.
 
@@ -479,7 +479,7 @@ Essa oportunidade é priorizada porque conecta diretamente o produtor e o consum
 
 > 🔒 A hipótese inicial é que **um registro verificável e difícil de alterar poderia aumentar a confiança na informação de rastreabilidade**.
 
-Na Agro Cassis, cada lote poderia ter um identificador único. Os registros e evidências seriam armazenados no sistema e uma impressão digital seria gerada por meio de **SHA-256**. Uma referência dessa impressão poderia ser registrada na Stellar, enquanto fotografias e vídeos permaneceriam armazenados fora da cadeia.
+Na AgroTrace Rural, cada lote poderia ter um identificador único. Os registros e evidências seriam armazenados no sistema e uma impressão digital seria gerada por meio de **SHA-256**. Uma referência dessa impressão poderia ser registrada na Stellar, enquanto fotografias e vídeos permaneceriam armazenados fora da cadeia.
 
 O consumidor escanearia um QR e consultaria informações como origem, lote, data e evidências disponíveis.
 
@@ -495,7 +495,7 @@ O critério principal identificado é:
 
 > ✅ **Várias partes precisam compartilhar um registro verificável e existe interesse em preservar o histórico dos registros.**
 
-Um banco de dados tradicional poderia resolver grande parte do problema quando existe uma única organização responsável por administrar todas as informações. Por essa razão, a Agro Cassis não pretende utilizar blockchain para todos os dados.
+Um banco de dados tradicional poderia resolver grande parte do problema quando existe uma única organização responsável por administrar todas as informações. Por essa razão, a AgroTrace Rural não pretende utilizar blockchain para todos os dados.
 
 A blockchain seria utilizada apenas onde acrescentar uma característica adicional: **demonstrar que determinada informação ou evidência existia em um momento determinado e que posteriormente não foi modificada sem deixar evidência da alteração**.
 
