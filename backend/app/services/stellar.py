@@ -33,7 +33,7 @@ def ensure_funded(server: Server, kp: Keypair) -> None:
     try:
         server.load_account(kp.public_key)
     except NotFoundError:
-        import httpx
+        import httpx2 as httpx
 
         resp = httpx.post(
             "https://friendbot.stellar.org",
