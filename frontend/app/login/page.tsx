@@ -22,6 +22,7 @@ interface GoogleIdentity {
         client_id: string;
         callback: (respuesta: RespuestaGoogle) => void;
         locale?: string;
+        use_fedcm_for_button?: boolean;
       }): void;
       renderButton(
         elemento: HTMLElement,
@@ -111,6 +112,14 @@ export default function LoginPage() {
       google.accounts.id.initialize({
         client_id: CLIENT_ID,
         locale: "es",
+        // FedCM: el navegador dibuja el diálogo de Google en vez de abrir un
+        // popup de accounts.google.com. Así desaparece el postMessage entre
+        // ventanas que produce el aviso "Cross-Origin-Opener-Policy policy
+        // would block the window.postMessage call" en la consola (es un
+        // aviso report-only de Google, no bloquea el ingreso). Solo aplica en
+        // Chrome M125+/Android M128+; el resto de navegadores conserva el
+        // flujo popup anterior.
+        use_fedcm_for_button: true,
         callback: (respuesta) => void alAutenticar(respuesta),
       });
       google.accounts.id.renderButton(divBoton.current, {
