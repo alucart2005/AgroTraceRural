@@ -7,6 +7,7 @@ import { cerrarSesion, leerSesion } from "@/lib/auth";
 import type { Usuario } from "@/lib/types";
 import Logo from "@/components/Logo";
 import MenuNavegacion from "@/components/MenuNavegacion";
+import MenuAyuda from "@/components/MenuAyuda";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Nav() {
@@ -147,12 +148,14 @@ export default function Nav() {
               Lote demo
             </Link>
             <ThemeToggle className="ml-1" />
+            <MenuAyuda />
           </nav>
         )}
 
-        {/* Móvil (< md): conmutador de tema y hamburguesa */}
+        {/* Móvil (< md): conmutador de tema, ayuda y hamburguesa */}
         <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-0.5 md:hidden">
           <ThemeToggle />
+          <MenuAyuda />
           <button
             type="button"
             onClick={() => setMenuAbierto((v) => !v)}

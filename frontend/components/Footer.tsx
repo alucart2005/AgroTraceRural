@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import { VERSION } from "@/lib/version";
 
 const enlaces = [
   {
@@ -26,6 +27,15 @@ const enlaces = [
       { label: "Mi perfil", href: "/productor/configuracion" },
     ],
   },
+  {
+    titulo: "Ayuda",
+    items: [
+      { label: "Manual de usuario", href: "/ayuda/manual" },
+      { label: "Novedades y versiones", href: "/ayuda/versiones" },
+      { label: "Acerca de AgroTrace", href: "/ayuda/acerca-de" },
+      { label: "Reportar un problema", href: "/ayuda/reportar" },
+    ],
+  },
 ];
 
 export default function Footer() {
@@ -42,6 +52,22 @@ export default function Footer() {
             <span className="font-semibold text-emerald-800">
               SHA-256 + Stellar Testnet
             </span>
+          </p>
+          <p className="mt-3 text-xs text-emerald-900/50">
+            AgroTrace Rural ·{" "}
+            <Link
+              href="/ayuda/versiones"
+              className="font-semibold text-emerald-700 underline underline-offset-4"
+            >
+              v{VERSION}
+            </Link>{" "}
+            ·{" "}
+            <Link
+              href="/ayuda"
+              className="underline underline-offset-4 hover:text-emerald-800"
+            >
+              Ayuda
+            </Link>
           </p>
         </div>
 

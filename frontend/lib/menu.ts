@@ -21,7 +21,11 @@ export type ClaveIcono =
   | "eventos"
   | "productos"
   | "evidencias"
-  | "perfil";
+  | "perfil"
+  | "ayuda"
+  | "versiones"
+  | "info"
+  | "soporte";
 
 export interface EnlaceMenu {
   href: string;
@@ -133,6 +137,37 @@ export const ENTRADAS: (GrupoMenu | (EnlaceMenu & { id: string }))[] = [
         label: "Datos del primer ingreso",
         descripcion: "Cédula, teléfono, finca y municipio",
         icono: "config",
+      },
+    ],
+  },
+  {
+    id: "ayuda",
+    label: "Ayuda",
+    icono: "ayuda",
+    items: [
+      {
+        href: "/ayuda/manual",
+        label: "Manual de usuario",
+        descripcion: "Guía paso a paso en español, inglés y portugués",
+        icono: "ayuda",
+      },
+      {
+        href: "/ayuda/versiones",
+        label: "Novedades y versiones",
+        descripcion: "Qué cambió en cada ciclo",
+        icono: "versiones",
+      },
+      {
+        href: "/ayuda/acerca-de",
+        label: "Acerca de AgroTrace",
+        descripcion: "El proyecto, el piloto y la infraestructura",
+        icono: "info",
+      },
+      {
+        href: "/ayuda/reportar",
+        label: "Reportar un problema",
+        descripcion: "Correo de soporte o incidencia",
+        icono: "soporte",
       },
     ],
   },

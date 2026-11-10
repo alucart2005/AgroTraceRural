@@ -207,6 +207,20 @@ body {
     background-color: rgb(var(--marca));
     color: rgb(var(--marca-fg));
   }
+
+  /* Recuadro de contenido (manual, avisos de página). */
+  .recuadro {
+    @apply rounded-xl border px-4 py-3 text-sm leading-relaxed;
+  }
+  .recuadro--nota {
+    @apply border-emerald-900/10 bg-emerald-50 text-emerald-900;
+  }
+  .recuadro--info {
+    @apply border-l-2 border-emerald-700 bg-emerald-50 text-emerald-900;
+  }
+  .recuadro--alerta {
+    @apply border-amber-400/50 bg-amber-50 text-amber-900;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { ENTRADAS, esGrupo, enlaceActivo, type ClaveIcono } from "@/lib/menu";
 import {
+  IconoAyuda,
   IconoBuscar,
   IconoCapas,
   IconoCheckCircle,
@@ -12,12 +13,15 @@ import {
   IconoConfiguracion,
   IconoEvidencias,
   IconoHistorial,
+  IconoInfo,
   IconoInicio,
   IconoLotes,
   IconoNuevoLote,
   IconoProductos,
   IconoQr,
+  IconoSoporte,
   IconoUsuario,
+  IconoVersiones,
 } from "@/components/icons";
 
 /** Todos los iconos comparten la misma firma: reciben ``className`` opcional. */
@@ -37,6 +41,10 @@ const ICONOS: Record<ClaveIcono, ComponenteIcono> = {
   productos: IconoProductos,
   evidencias: IconoEvidencias,
   perfil: IconoUsuario,
+  ayuda: IconoAyuda,
+  versiones: IconoVersiones,
+  info: IconoInfo,
+  soporte: IconoSoporte,
 };
 
 /**
