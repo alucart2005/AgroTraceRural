@@ -25,7 +25,7 @@ export default function Buscador({ compacto = false }: { compacto?: boolean }) {
         <input
           type="search"
           className="input"
-          placeholder="HUE-2027-001"
+          placeholder="HUE-2026-008"
           aria-label="Código del lote"
           value={codigo}
           onChange={(e) => setCodigo(e.target.value)}
@@ -49,7 +49,7 @@ export default function Buscador({ compacto = false }: { compacto?: boolean }) {
         <input
           type="search"
           className="input"
-          placeholder="HUE-2027-001"
+          placeholder="HUE-2026-008"
           aria-label="Código del lote"
           value={codigo}
           onChange={(e) => setCodigo(e.target.value)}
@@ -64,9 +64,9 @@ export default function Buscador({ compacto = false }: { compacto?: boolean }) {
         <button
           type="button"
           className="font-semibold text-emerald-700 underline"
-          onClick={() => router.push("/lote/HUE-2027-001")}
+          onClick={() => router.push("/lote/HUE-2026-008")}
         >
-          HUE-2027-001
+          HUE-2026-008
         </button>
         .
       </p>

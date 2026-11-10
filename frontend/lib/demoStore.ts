@@ -1,7 +1,9 @@
 import type { Evento, Lote } from "./types";
 import { hashLote, payloadDeLote, sha256Hex } from "./hash";
 
-const KEY = "agrotrace.demo.lotes.v2";
+// v3: la semilla pasa a ser el lote real HUE-2026-008 (antes HUE-2027-001);
+// subir la versión fuerza el re-sembrado en navegadores con datos viejos.
+const KEY = "agrotrace.demo.lotes.v3";
 
 function readStore(): Lote[] {
   if (typeof window === "undefined") return [];
@@ -47,41 +49,49 @@ export function nuevoCodigo(fechaISO: string, existentes: string[]): string {
 
 async function makeSeed(): Promise<Lote> {
   const base = {
-    codigo: "HUE-2027-001",
-    fecha_cosecha: "2027-03-14",
-    fecha_postura: "2027-03-13",
+    codigo: "HUE-2026-008",
+    fecha_cosecha: "2026-10-25",
+    fecha_postura: "2026-10-25",
     linea_productiva: "Huevos Guarumo",
-    cantidad: 10,
+    cantidad: 35,
     unidad: "cubetas",
     finca: "Finca Guarumo",
     municipio: "Cáceres, Antioquia",
-    evidencias: [{ nombre: "galpon-huevos.jpg", tamano: 2481930 }],
+    evidencias: [
+      { nombre: "ATR-3.jpeg", tamano: 80194 },
+      { nombre: "ATR-1.jpg", tamano: 74776 },
+      { nombre: "ATR-2.jpeg", tamano: 81361 },
+      { nombre: "ATR-4.jpg", tamano: 112351 },
+      { nombre: "ATR-5.png", tamano: 97448 },
+    ],
   };
+  // El lote demo replica el lote real HUE-2026-008 de producción: con los
+  // mismos 8 campos canónicos, hashLote reproduce el hash anclado en Stellar
+  // (paridad backend/frontend probada en tests/test_sha256.py).
   const hash = await hashLote(payloadDeLote(base));
-  const tx = await sha256Hex("demo-anchor:" + hash);
   const eventos: Evento[] = [
     {
       id: "ev-1",
       tipo: "cosecha",
-      fecha: "2027-03-14T06:40:00-05:00",
-      descripcion: "Recolección de 10 cubetas en el galpón de ponedoras.",
+      fecha: "2026-10-25T06:40:00-05:00",
+      descripcion: "Recolección de 35 cubetas en el galpón de ponedoras.",
     },
     {
       id: "ev-2",
       tipo: "clasificacion",
-      fecha: "2027-03-14T09:15:00-05:00",
+      fecha: "2026-10-25T09:15:00-05:00",
       descripcion: "Clasificación por tamaño y revisión de calidad.",
     },
     {
       id: "ev-3",
       tipo: "empaque",
-      fecha: "2027-03-14T11:30:00-05:00",
+      fecha: "2026-10-25T11:30:00-05:00",
       descripcion: "Empaque en cubetas y etiquetado QR.",
     },
     {
       id: "ev-4",
       tipo: "despacho",
-      fecha: "2027-03-14T14:05:00-05:00",
+      fecha: "2026-10-25T14:05:00-05:00",
       descripcion: "Salida hacia el punto de venta en Cáceres.",
     },
   ];
@@ -95,13 +105,20 @@ async function makeSeed(): Promise<Lote> {
     unidad: base.unidad,
     finca: base.finca,
     municipio: base.municipio,
-    fotos: ["/evidencia-demo.svg"],
+    fotos: [
+      "https://pub-7266506c2285455391c094f81085c086.r2.dev/evidencias/68eeee09-7510-4fa6-8f79-ea0b958d2eda/00_ATR-3.jpeg",
+      "https://pub-7266506c2285455391c094f81085c086.r2.dev/evidencias/68eeee09-7510-4fa6-8f79-ea0b958d2eda/01_ATR-1.jpg",
+      "https://pub-7266506c2285455391c094f81085c086.r2.dev/evidencias/68eeee09-7510-4fa6-8f79-ea0b958d2eda/02_ATR-2.jpeg",
+      "https://pub-7266506c2285455391c094f81085c086.r2.dev/evidencias/68eeee09-7510-4fa6-8f79-ea0b958d2eda/03_ATR-4.jpg",
+      "https://pub-7266506c2285455391c094f81085c086.r2.dev/evidencias/68eeee09-7510-4fa6-8f79-ea0b958d2eda/04_ATR-5.png",
+    ],
     evidencias: base.evidencias,
     hash_sha256: hash,
-    stellar_tx_hash: tx,
-    stellar_ledger: 5129949,
+    // Ancla real del lote en Stellar Testnet (viewable en cualquier explorador).
+    stellar_tx_hash: "0b3a48c0934f2d5e512ddae3a2dc79ec6051bf3599302a0c286dcffa9c118ca9",
+    stellar_ledger: 5377565,
     eventos,
-    created_at: "2027-03-14T06:45:00-05:00",
+    created_at: "2026-10-25T06:56:49.864498Z",
     demo: true,
   };
 }
@@ -150,7 +167,7 @@ export async function crearLote(input: {
     fotos: input.fotos.map((f) => f.dataUrl),
     hash_sha256: hash,
     stellar_tx_hash: tx,
-    stellar_ledger: 5129949 + lotes.length,
+    stellar_ledger: 5377565 + lotes.length,
     eventos: [
       {
         id: "ev-1",

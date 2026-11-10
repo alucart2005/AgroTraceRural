@@ -13,21 +13,21 @@ const pasos = [
     n: "2",
     titulo: "Hash + ancla en Stellar",
     texto: "El sistema calcula el SHA-256 de los datos y ancla la huella en Stellar Testnet (solo el hash).",
-    href: "/lote/HUE-2027-001",
+    href: "/lote/HUE-2026-008",
     hu: "HU-03",
   },
   {
     n: "3",
     titulo: "Etiqueta QR imprimible",
     texto: "Se genera un QR único por cubeta que enlaza a la página pública del lote.",
-    href: "/lote/HUE-2027-001/etiqueta",
+    href: "/lote/HUE-2026-008/etiqueta",
     hu: "HU-04",
   },
   {
     n: "4",
     titulo: "Consulta del consumidor",
     texto: "El cliente escanea el QR y ve origen, fecha, fotos y la línea de tiempo del lote.",
-    href: "/lote/HUE-2027-001",
+    href: "/lote/HUE-2026-008",
     hu: "HU-02 / HU-05",
   },
 ];
@@ -52,7 +52,7 @@ export default function Home() {
           <Link href="/productor/nuevo" className="btn-primary">
             🥚 Registrar lote
           </Link>
-          <Link href="/lote/HUE-2027-001" className="btn-secondary">
+          <Link href="/lote/HUE-2026-008" className="btn-secondary">
             🔍 Ver lote demo (QR)
           </Link>
         </div>
@@ -100,7 +100,7 @@ export default function Home() {
           nulos y confirmación en 3–5 segundos.
         </p>
         <p className="mt-3 text-sm">
-          <Link href="/lote/HUE-2027-001" className="font-semibold text-emerald-700 underline">
+          <Link href="/lote/HUE-2026-008" className="font-semibold text-emerald-700 underline">
             Probar la verificación de integridad →
           </Link>
         </p>
