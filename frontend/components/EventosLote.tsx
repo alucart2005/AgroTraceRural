@@ -6,6 +6,7 @@ import type { EventoTipo, Lote } from "@/lib/types";
 import { EVENTO_LABELS } from "@/lib/types";
 import { agregarEvento, modoDemoActivo, obtenerLote } from "@/lib/api";
 import AvisoModoDemo from "@/components/AvisoModoDemo";
+import EncabezadoPagina from "@/components/EncabezadoPagina";
 import Timeline from "@/components/Timeline";
 
 const TIPOS_REGISTRABLES: Exclude<EventoTipo, "cosecha">[] = [
@@ -109,23 +110,16 @@ export default function EventosLotePage({ codigo }: { codigo: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-            {lote.codigo} · {lote.linea_productiva} · {lote.cantidad} {lote.unidad}
-          </p>
-          <h1 className="text-3xl font-bold text-emerald-950">
-            Cadena de custodia
-          </h1>
-          <p className="text-sm text-emerald-900/70">
-            HU-05 — registra la clasificación, el empaque y el despacho para que
-            el distribuidor vea la línea de tiempo completa.
-          </p>
-        </div>
-        <Link href={`/lote/${lote.codigo}`} className="btn-secondary">
-          Ver ficha pública
-        </Link>
-      </div>
+      <EncabezadoPagina
+        eyebrow={`${lote.codigo} · ${lote.linea_productiva} · ${lote.cantidad} ${lote.unidad}`}
+        titulo="Cadena de custodia"
+        descripcion="Registra la clasificación, el empaque y el despacho para que el distribuidor vea la línea de tiempo completa."
+        acciones={
+          <Link href={`/lote/${lote.codigo}`} className="btn-secondary">
+            Ver ficha pública
+          </Link>
+        }
+      />
 
       {(demo || lote.demo) && (
         <AvisoModoDemo

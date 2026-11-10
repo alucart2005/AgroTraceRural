@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { ApiError, listarMisLotes, modoDemoActivo } from "@/lib/api";
 import type { Lote } from "@/lib/types";
 import AvisoModoDemo from "@/components/AvisoModoDemo";
+import EncabezadoPagina from "@/components/EncabezadoPagina";
 import ProtegerProductor from "@/components/ProtegerProductor";
 
 export default function ProductorPage() {
@@ -41,17 +42,16 @@ function MisLotes() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold text-emerald-950">Mis lotes</h1>
-          <p className="text-sm text-emerald-900/70">
-            Registro de cosechas de la Finca Guarumo (HU-01 · HU-05).
-          </p>
-        </div>
-        <Link href="/productor/nuevo" className="btn-primary">
-          + Nuevo lote
-        </Link>
-      </div>
+      <EncabezadoPagina
+        eyebrow="Productor"
+        titulo="Mis lotes"
+        descripcion="Registro de cosechas de la Finca Guarumo (HU-01 · HU-05)."
+        acciones={
+          <Link href="/productor/nuevo" className="btn-primary">
+            + Nuevo lote
+          </Link>
+        }
+      />
 
       {demo && <AvisoModoDemo detalle="estos lotes son de ejemplo" />}
 
@@ -69,39 +69,66 @@ function MisLotes() {
       )}
 
       {lotes !== null && lotes.length > 0 && (
-        <ul className="grid gap-4">
-          {lotes.map((l) => (
-            <li key={l.id} className="card">
-              <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="overflow-hidden rounded-card border border-emerald-900/10 bg-white">
+          <div className="hidden border-b border-emerald-900/10 bg-emerald-50/50 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-900/55 md:grid md:grid-cols-[7.5rem_minmax(0,1fr)_7rem_7rem_auto] md:gap-3">
+            <span>Lote</span>
+            <span>Línea y origen</span>
+            <span>Cantidad</span>
+            <span>Cosecha</span>
+            <span className="text-right">Acciones</span>
+          </div>
+          <ul className="divide-y divide-emerald-900/10">
+            {lotes.map((l) => (
+              <li
+                key={l.id}
+                className="grid gap-2 px-4 py-4 transition hover:bg-emerald-50/40 md:grid-cols-[7.5rem_minmax(0,1fr)_7rem_7rem_auto] md:items-center md:gap-3"
+              >
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                  <Link
+                    href={`/lote/${l.codigo}`}
+                    className="font-display text-[17px] font-semibold tracking-tight text-emerald-950 underline-offset-4 hover:underline"
+                  >
                     {l.codigo}
+                  </Link>
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-emerald-950">
+                    {l.linea_productiva}
                   </p>
-                  <p className="text-lg font-bold text-emerald-950">
-                    {l.linea_productiva} · {l.cantidad} {l.unidad}
-                  </p>
-                  <p className="text-sm text-emerald-900/70">
-                    Cosecha: {l.fecha_cosecha} · {l.municipio}
-                  </p>
-                  <p className="mt-1 font-mono text-xs text-emerald-900/50">
-                    SHA-256: {l.hash_sha256.slice(0, 32)}…
+                  <p className="truncate text-xs text-emerald-900/60">
+                    {l.finca} · {l.municipio}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2 text-sm">
-                  <Link href={`/productor/lote/${l.codigo}/eventos`} className="btn-secondary">
+                <p className="whitespace-nowrap text-sm text-emerald-900/80">
+                  {l.cantidad} {l.unidad}
+                </p>
+                <p className="whitespace-nowrap text-sm text-emerald-900/80">
+                  {l.fecha_cosecha}
+                </p>
+                <div className="flex flex-wrap gap-1 md:justify-end">
+                  <Link
+                    href={`/productor/lote/${l.codigo}/eventos`}
+                    className="rounded-md px-2 py-1 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                  >
                     Eventos
                   </Link>
-                  <Link href={`/lote/${l.codigo}`} className="btn-secondary">
-                    Ver público
+                  <Link
+                    href={`/lote/${l.codigo}`}
+                    className="rounded-md px-2 py-1 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                  >
+                    Ficha
                   </Link>
-                  <Link href={`/lote/${l.codigo}/etiqueta`} className="btn-primary">
+                  <Link
+                    href={`/lote/${l.codigo}/etiqueta`}
+                    className="rounded-md px-2 py-1 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                  >
                     QR
                   </Link>
                 </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

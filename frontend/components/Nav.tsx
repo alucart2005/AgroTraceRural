@@ -5,20 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { cerrarSesion, leerSesion } from "@/lib/auth";
 import type { Usuario } from "@/lib/types";
-
-const links = [
-  { href: "/", label: "Inicio" },
-  { href: "/#buscar", label: "Consultar lote" },
-  { href: "/productor", label: "Productor" },
-  { href: "/productor/nuevo", label: "Registrar lote" },
-  { href: "/lote/HUE-2026-008", label: "Lote demo" },
-];
-
-function linkActivo(href: string, pathname: string): boolean {
-  if (href === "/") return pathname === "/";
-  const base = href.replace(/\/HUE-.*$/, "").replace(/\/$/, "") || "/";
-  return pathname.startsWith(base);
-}
+import Logo from "@/components/Logo";
+import MenuNavegacion from "@/components/MenuNavegacion";
 
 export default function Nav() {
   const pathname = usePathname();
@@ -64,22 +52,8 @@ export default function Nav() {
     router.refresh();
   }
 
-  const claseLink = (activo: boolean) =>
-    `rounded-lg px-3 py-2 transition ${
-      activo
-        ? "bg-emerald-700 text-white"
-        : "text-emerald-900/70 hover:bg-emerald-50 hover:text-emerald-900"
-    }`;
-
-  const claseLinkMovil = (activo: boolean) =>
-    `block rounded-lg px-3 py-3 text-base transition ${
-      activo
-        ? "bg-emerald-700 text-white"
-        : "text-emerald-900/70 hover:bg-emerald-50 hover:text-emerald-900"
-    }`;
-
   const sesionMovil = usuario ? (
-    <div className="mt-2 flex items-center gap-3 rounded-lg bg-emerald-50 px-3 py-3 ring-1 ring-emerald-900/10">
+    <div className="mt-3 flex items-center gap-3 rounded-xl bg-emerald-50 px-3 py-3 ring-1 ring-emerald-900/10">
       {usuario.foto_url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -104,7 +78,7 @@ export default function Nav() {
     <Link
       href="/login"
       onClick={() => setMenuAbierto(false)}
-      className={`mt-2 block rounded-lg px-3 py-3 text-base font-semibold transition ${
+      className={`mt-3 block rounded-lg px-3 py-3 text-base font-semibold transition ${
         pathname === "/login"
           ? "bg-emerald-700 text-white"
           : "bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
@@ -114,60 +88,65 @@ export default function Nav() {
     </Link>
   );
 
+  // En el área del productor el shell de escritorio es el sidebar (mockup del
+  // rediseño): la barra horizontal sobra en ≥ md, pero en móvil se conserva.
+  const esProductor = pathname.startsWith("/productor");
+
   return (
     <header
       ref={headerRef}
-      className="no-print sticky top-0 z-40 border-b border-emerald-900/10 bg-white/90 backdrop-blur"
+      className={`no-print sticky top-0 z-40 border-b border-emerald-900/10 bg-white/90 backdrop-blur ${
+        esProductor ? "md:hidden" : ""
+      }`}
     >
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 font-bold text-emerald-900">
-          <span className="text-xl">🌱</span>
-          <span>AgroTrace Rural</span>
+      <div className="relative mx-auto flex max-w-5xl items-center justify-center gap-4 px-4 py-3 md:justify-between">
+        <Link href="/" aria-label="AgroTrace Rural — ir al inicio">
+          <Logo />
         </Link>
 
-        {/* Escritorio (≥ md): barra horizontal como siempre */}
-        <nav className="hidden flex-wrap items-center gap-1 text-sm md:flex">
-          {links.map((l) => (
-            <Link key={l.href} href={l.href} className={claseLink(linkActivo(l.href, pathname))}>
-              {l.label}
-            </Link>
-          ))}
-
-          {usuario ? (
-            <span className="ml-1 flex items-center gap-2 rounded-lg bg-emerald-50 px-2 py-1.5 text-emerald-950 ring-1 ring-emerald-900/10">
-              {usuario.foto_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={usuario.foto_url}
-                  alt={usuario.nombre}
-                  className="h-6 w-6 rounded-full object-cover"
-                />
-              ) : (
-                <span aria-hidden>👤</span>
-              )}
-              <span className="max-w-[9rem] truncate text-xs font-semibold">
-                {usuario.nombre || usuario.email}
-              </span>
-              <button
-                onClick={salir}
-                className="rounded-md px-2 py-1 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100"
-              >
-                Salir
-              </button>
-            </span>
-          ) : (
+        {/* Escritorio (≥ md) fuera del área del productor: barra horizontal. */}
+        {!esProductor && (
+          <nav className="hidden items-center gap-1 text-sm md:flex">
             <Link
-              href="/login"
+              href="/"
               className={`rounded-lg px-3 py-2 font-semibold transition ${
-                pathname === "/login"
+                pathname === "/"
                   ? "bg-emerald-700 text-white"
-                  : "bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
+                  : "text-emerald-900/70 hover:bg-emerald-50 hover:text-emerald-900"
               }`}
             >
-              Iniciar sesión
+              Inicio
             </Link>
-          )}
-        </nav>
+            <Link
+              href="/#buscar"
+              className="rounded-lg px-3 py-2 font-semibold text-emerald-900/70 transition hover:bg-emerald-50 hover:text-emerald-900"
+            >
+              Consultar lote
+            </Link>
+            <Link
+              href="/productor"
+              className={`rounded-lg px-3 py-2 font-semibold transition ${
+                pathname.startsWith("/productor")
+                  ? "bg-emerald-700 text-white"
+                  : "text-emerald-900/70 hover:bg-emerald-50 hover:text-emerald-900"
+              }`}
+            >
+              Productor
+            </Link>
+            <Link
+              href="/productor/nuevo"
+              className="rounded-lg px-3 py-2 font-semibold text-emerald-900/70 transition hover:bg-emerald-50 hover:text-emerald-900"
+            >
+              Registrar lote
+            </Link>
+            <Link
+              href="/lote/HUE-2026-008"
+              className="rounded-lg px-3 py-2 font-semibold text-emerald-900/70 transition hover:bg-emerald-50 hover:text-emerald-900"
+            >
+              Lote demo
+            </Link>
+          </nav>
+        )}
 
         {/* Móvil (< md): hamburguesa */}
         <button
@@ -176,7 +155,7 @@ export default function Nav() {
           aria-expanded={menuAbierto}
           aria-controls="menu-movil"
           aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
-          className="rounded-lg p-2 text-emerald-900 transition hover:bg-emerald-50 md:hidden"
+          className="absolute right-4 top-1/2 -translate-y-1/2 rounded-lg p-2 text-emerald-900 transition hover:bg-emerald-50 md:hidden"
         >
           {menuAbierto ? (
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
@@ -190,17 +169,13 @@ export default function Nav() {
         </button>
       </div>
 
-      {/* Panel desplegable móvil */}
+      {/* Panel desplegable móvil con el menú completo y sus submenús */}
       {menuAbierto && (
         <nav
           id="menu-movil"
-          className="border-t border-emerald-900/10 bg-white px-4 py-3 md:hidden"
+          className="max-h-[80vh] overflow-y-auto border-t border-emerald-900/10 bg-white px-4 py-4 md:hidden"
         >
-          {links.map((l) => (
-            <Link key={l.href} href={l.href} className={claseLinkMovil(linkActivo(l.href, pathname))}>
-              {l.label}
-            </Link>
-          ))}
+          <MenuNavegacion variante="movil" onNavegar={() => setMenuAbierto(false)} />
           {sesionMovil}
         </nav>
       )}

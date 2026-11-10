@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, loginConGoogle } from "@/lib/api";
 import { cerrarSesion, guardarSesion, leerSesion } from "@/lib/auth";
 import type { Sesion, Usuario } from "@/lib/types";
+import Logo from "@/components/Logo";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const HAY_API = !!process.env.NEXT_PUBLIC_API_URL;
@@ -161,12 +162,14 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto max-w-md space-y-6">
-      <div className="text-center">
-        <p className="text-4xl">🌱</p>
-        <h1 className="mt-2 text-3xl font-bold text-emerald-950">
+      <div className="space-y-3 text-center">
+        <div className="flex justify-center">
+          <Logo tamano="lg" />
+        </div>
+        <h1 className="font-display text-[28px] font-semibold tracking-tight text-emerald-950">
           Ingreso de productores
         </h1>
-        <p className="mt-1 text-sm text-emerald-900/70">
+        <p className="text-sm text-emerald-900/70">
           Entra con tu cuenta de Google para registrar y consultar tus lotes.
         </p>
       </div>

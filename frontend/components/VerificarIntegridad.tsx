@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Lote, Verificacion } from "@/lib/types";
 import { verificarLote } from "@/lib/api";
 
@@ -9,11 +9,36 @@ function trunc(hex: string | null, n = 16): string {
   return hex.length > n * 2 ? `${hex.slice(0, n)}…` : hex;
 }
 
-export default function VerificarIntegridad({ lote }: { lote: Lote }) {
+export default function VerificarIntegridad({
+  lote,
+  inicial,
+}: {
+  lote: Lote;
+  /**
+   * Resultado de una verificación ya realizada (la ficha la dispara al cargar
+   * para pintar el banner). Sirve para mostrar el detalle sin obligar a
+   * pulsar «Verificar ahora» otra vez. ``undefined`` = sin verificación previa.
+   */
+  inicial?: Verificacion | null;
+}) {
   const [estado, setEstado] = useState<
     "idle" | "verificando" | "ok" | "error" | "fallo"
   >("idle");
   const [resultado, setResultado] = useState<Verificacion | null>(null);
+
+  // Se refleja la verificación previa en cuanto llega (sin Dispararla otra vez).
+  useEffect(() => {
+    if (inicial === undefined) return;
+    setResultado(inicial);
+    if (inicial === null) {
+      // Sin backend/Stellar no se puede afirmar nada: se marca como no disponible.
+      setEstado("fallo");
+    } else if (inicial.verificado) {
+      setEstado("ok");
+    } else {
+      setEstado(inicial.error ? "fallo" : "error");
+    }
+  }, [inicial]);
 
   async function verificar() {
     setEstado("verificando");

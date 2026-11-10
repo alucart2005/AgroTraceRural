@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import ProtegerProductor from "@/components/ProtegerProductor";
+import EncabezadoPagina from "@/components/EncabezadoPagina";
 import { actualizarPerfil } from "@/lib/api";
 import { guardarSesion, leerSesion } from "@/lib/auth";
 import type { Usuario } from "@/lib/types";
@@ -101,13 +102,11 @@ function FormularioPerfil() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-emerald-950">
-          Bienvenido a AgroTrace
-        </h1>
-        <p className="text-sm text-emerald-900/70">
-          Antes de registrar tu primer lote, cuéntanos tus datos (HU-07). Los
-          usamos para identificar quién respalda cada cosecha.
-        </p>
+        <EncabezadoPagina
+          eyebrow="Primer ingreso · HU-07"
+          titulo="Completa tus datos"
+          descripcion="Antes de registrar tu primer lote, cuéntanos tus datos. Los usamos para identificar quién respalda cada cosecha."
+        />
       </div>
 
       <div className="flex items-center gap-3 rounded-xl border border-emerald-900/10 bg-emerald-50/60 p-3">

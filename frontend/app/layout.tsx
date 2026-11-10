@@ -4,10 +4,20 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import "./globals.css";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+// Fraunces: serif variable con eje óptico, para titulares y cifras grandes.
+// Archivo: grotesca variable para interfaz, etiquetas y datos.
+const fraunces = localFont({
+  src: "./fonts/FrauncesVF.woff2",
+  variable: "--font-display",
+  weight: "400 700",
+  display: "swap",
+});
+
+const archivo = localFont({
+  src: "./fonts/ArchivoVF.woff2",
+  variable: "--font-ui",
+  weight: "400 700",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -24,9 +34,11 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es">
-      <body className={`${geistSans.variable} antialiased`}>
+      <body
+        className={`${fraunces.variable} ${archivo.variable} font-sans antialiased`}
+      >
         <Nav />
-        <main className="mx-auto min-h-[70vh] w-full max-w-5xl px-4 py-8">
+        <main className="mx-auto min-h-[70vh] w-full max-w-6xl px-4 py-8 sm:px-6">
           {children}
         </main>
         <Footer />
