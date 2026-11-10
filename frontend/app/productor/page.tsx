@@ -69,7 +69,7 @@ function MisLotes() {
       )}
 
       {lotes !== null && lotes.length > 0 && (
-        <div className="overflow-hidden rounded-card border border-emerald-900/10 bg-white">
+        <div className="overflow-hidden rounded-card border border-emerald-900/10 bg-superficie">
           <div className="hidden border-b border-emerald-900/10 bg-emerald-50/50 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-900/55 md:grid md:grid-cols-[7.5rem_minmax(0,1fr)_7rem_7rem_auto] md:gap-3">
             <span>Lote</span>
             <span>Línea y origen</span>

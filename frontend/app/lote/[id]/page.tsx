@@ -31,7 +31,7 @@ function estadoDe(v: Verificacion | null | undefined): EstadoVerificacion {
 function BannerVerificacion({ estado }: { estado: EstadoVerificacion }) {
   if (estado === "verificando") {
     return (
-      <div className="flex items-center gap-3 rounded-2xl border border-emerald-900/10 bg-white px-4 py-3">
+      <div className="flex items-center gap-3 rounded-2xl border border-emerald-900/10 bg-superficie px-4 py-3">
         <span className="h-11 w-11 shrink-0 animate-pulse rounded-full bg-emerald-100" />
         <div>
           <p className="text-lg font-bold text-emerald-950">Verificando lote…</p>

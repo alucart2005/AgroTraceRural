@@ -42,7 +42,7 @@ export default function Buscador({ compacto = false }: { compacto?: boolean }) {
   return (
     <section
       id="buscar"
-      className="grid gap-6 rounded-card border border-emerald-900/10 bg-white p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] md:items-center md:p-8"
+      className="grid gap-6 rounded-card border border-emerald-900/10 bg-superficie p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] md:items-center md:p-8"
     >
       <div>
         <h2 className="font-display text-[24px] font-semibold tracking-tight text-emerald-950">

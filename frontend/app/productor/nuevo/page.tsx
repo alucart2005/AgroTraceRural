@@ -104,10 +104,10 @@ function Stepper({
               aria-current={activo ? "step" : undefined}
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold transition ${
                 activo
-                  ? "bg-emerald-700 text-white shadow-sm"
+                  ? "marca shadow-sm"
                   : completo
                     ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                    : "border-2 border-emerald-900/15 bg-white text-emerald-900/45"
+                    : "border-2 border-emerald-900/15 bg-superficie text-emerald-900/45"
               }`}
             >
               {completo ? <IconoCheck className="h-5 w-5" /> : n}
@@ -485,7 +485,7 @@ function WizardLote() {
                         type="button"
                         onClick={() => quitarEvidencia(i)}
                         aria-label={`Quitar ${ev.file.name}`}
-                        className="shrink-0 rounded-lg border border-red-300/60 bg-white px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                        className="shrink-0 rounded-lg border border-red-300/60 bg-superficie px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
                       >
                         Quitar
                       </button>
@@ -619,7 +619,7 @@ function WizardLote() {
                   <label
                     htmlFor="foto-panel"
                     title="Agregar más fotos"
-                    className="absolute bottom-2 right-2 flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl bg-white text-emerald-900 shadow-md ring-1 ring-emerald-900/10 transition hover:bg-emerald-50"
+                    className="absolute bottom-2 right-2 flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl bg-superficie text-emerald-900 shadow-md ring-1 ring-emerald-900/10 transition hover:bg-emerald-50"
                   >
                     <IconoCamara className="h-5 w-5" />
                     <input
@@ -662,7 +662,7 @@ function WizardLote() {
                 <button
                   type="button"
                   onClick={() => quitarEvidencia(fotoActiva)}
-                  className="w-full rounded-xl border border-red-300/60 bg-white px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50"
+                  className="w-full rounded-xl border border-red-300/60 bg-superficie px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50"
                 >
                   Quitar esta foto
                 </button>

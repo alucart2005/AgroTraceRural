@@ -91,7 +91,7 @@ export default function MenuNavegacion({
               aria-current={activo ? "page" : undefined}
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
                 activo
-                  ? "bg-emerald-700 text-white shadow-sm"
+                  ? "marca shadow-sm"
                   : "text-emerald-900/70 hover:bg-emerald-50 hover:text-emerald-900"
               }`}
             >

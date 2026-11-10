@@ -7,6 +7,7 @@ import { cerrarSesion, leerSesion } from "@/lib/auth";
 import type { Usuario } from "@/lib/types";
 import Logo from "@/components/Logo";
 import MenuNavegacion from "@/components/MenuNavegacion";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Nav() {
   const pathname = usePathname();
@@ -69,7 +70,7 @@ export default function Nav() {
       </span>
       <button
         onClick={salir}
-        className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 ring-1 ring-emerald-900/10"
+        className="rounded-md bg-superficie px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 ring-1 ring-emerald-900/10"
       >
         Salir
       </button>
@@ -80,7 +81,7 @@ export default function Nav() {
       onClick={() => setMenuAbierto(false)}
       className={`mt-3 block rounded-lg px-3 py-3 text-base font-semibold transition ${
         pathname === "/login"
-          ? "bg-emerald-700 text-white"
+          ? "marca"
           : "bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
       }`}
     >
@@ -95,7 +96,7 @@ export default function Nav() {
   return (
     <header
       ref={headerRef}
-      className={`no-print sticky top-0 z-40 border-b border-emerald-900/10 bg-white/90 backdrop-blur ${
+      className={`no-print sticky top-0 z-40 border-b border-emerald-900/10 bg-superficie/90 backdrop-blur ${
         esProductor ? "md:hidden" : ""
       }`}
     >
@@ -111,7 +112,7 @@ export default function Nav() {
               href="/"
               className={`rounded-lg px-3 py-2 font-semibold transition ${
                 pathname === "/"
-                  ? "bg-emerald-700 text-white"
+                  ? "marca"
                   : "text-emerald-900/70 hover:bg-emerald-50 hover:text-emerald-900"
               }`}
             >
@@ -127,7 +128,7 @@ export default function Nav() {
               href="/productor"
               className={`rounded-lg px-3 py-2 font-semibold transition ${
                 pathname.startsWith("/productor")
-                  ? "bg-emerald-700 text-white"
+                  ? "marca"
                   : "text-emerald-900/70 hover:bg-emerald-50 hover:text-emerald-900"
               }`}
             >
@@ -145,18 +146,21 @@ export default function Nav() {
             >
               Lote demo
             </Link>
+            <ThemeToggle className="ml-1" />
           </nav>
         )}
 
-        {/* Móvil (< md): hamburguesa */}
-        <button
-          type="button"
-          onClick={() => setMenuAbierto((v) => !v)}
-          aria-expanded={menuAbierto}
-          aria-controls="menu-movil"
-          aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
-          className="absolute right-4 top-1/2 -translate-y-1/2 rounded-lg p-2 text-emerald-900 transition hover:bg-emerald-50 md:hidden"
-        >
+        {/* Móvil (< md): conmutador de tema y hamburguesa */}
+        <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-0.5 md:hidden">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setMenuAbierto((v) => !v)}
+            aria-expanded={menuAbierto}
+            aria-controls="menu-movil"
+            aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
+            className="rounded-lg p-2 text-emerald-900 transition hover:bg-emerald-50"
+          >
           {menuAbierto ? (
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
               <path d="M6 6l12 12M18 6L6 18" />
@@ -166,14 +170,15 @@ export default function Nav() {
               <path d="M4 7h16M4 12h16M4 17h16" />
             </svg>
           )}
-        </button>
+          </button>
+        </div>
       </div>
 
       {/* Panel desplegable móvil con el menú completo y sus submenús */}
       {menuAbierto && (
         <nav
           id="menu-movil"
-          className="max-h-[80vh] overflow-y-auto border-t border-emerald-900/10 bg-white px-4 py-4 md:hidden"
+          className="max-h-[80vh] overflow-y-auto border-t border-emerald-900/10 bg-superficie px-4 py-4 md:hidden"
         >
           <MenuNavegacion variante="movil" onNavegar={() => setMenuAbierto(false)} />
           {sesionMovil}

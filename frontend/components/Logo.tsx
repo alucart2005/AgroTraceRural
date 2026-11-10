@@ -16,11 +16,19 @@ export default function Logo({
   return (
     <span className={`flex items-center gap-2.5 ${className}`}>
       <svg viewBox="0 0 48 48" className={`${hoja} shrink-0`} aria-hidden>
-        <path d="M21 41C10 34 8 20 16 7c10 4 14 15 11 25-1 4-3 7-6 9Z" fill="#235A37" />
-        <path d="M24 41c-1-9 3-19 12-23 3 9-1 18-9 22l-3 1Z" fill="#6DA47E" />
+        {/* Los tonos de la hoja usan los tokens de marca: seadaptan al tema
+            oscuro sin alterar el verde original del tema claro. */}
+        <path
+          d="M21 41C10 34 8 20 16 7c10 4 14 15 11 25-1 4-3 7-6 9Z"
+          fill="rgb(var(--marca))"
+        />
+        <path
+          d="M24 41c-1-9 3-19 12-23 3 9-1 18-9 22l-3 1Z"
+          fill="rgb(var(--e-400))"
+        />
         <path
           d="M22 42c1-8 5-16 11-21"
-          stroke="#14351F"
+          stroke="rgb(var(--e-950))"
           strokeWidth="1.6"
           fill="none"
           strokeLinecap="round"

@@ -3,15 +3,160 @@
 @tailwind utilities;
 
 /* Sistema visual «El libro de la finca»: tinta verde sobre papel frío.
-   Las reglas (hairlines) estruturan la información; las sombras suaves y las
-   tarjetas idénticas quedan fuera: la jerarquía la marcan el color, la tipografía
-   y el espacio. */
+   Las reglas (hairlines) estructuran la información; las sombras suaves y las
+   tarjetas idénticas quedan fuera: la jerarquía la marcan el color, la
+   tipografía y el espacio.
+
+   Toda la paleta vive aquí como variables: la clase `dark` en <html> la
+   intercambia, de modo que el tema oscuro no necesita una sola clase
+   `dark:` repartida por los componentes. */
 :root {
+  /* Escala de marca: en claro va de la superficie más clara (50) al texto
+     más oscuro (950). */
+  --e-50: 241 246 241;
+  --e-100: 225 237 227;
+  --e-200: 198 220 203;
+  --e-300: 159 197 170;
+  --e-400: 109 164 126;
+  --e-500: 70 135 91;
+  --e-600: 47 109 68;
+  --e-700: 35 90 55;
+  --e-800: 27 71 41;
+  --e-900: 20 53 31;
+  --e-950: 11 33 20;
+
   --background: #f6f7f3;
   --foreground: #14201a;
-  --rule: #e3e8df;
-  --ink: #14201a;
+  --superficie: #ffffff;
+  --regla: #e3e8df;
   --muted: #5e6b61;
+
+  /* Avisos (ámbar) y alertas (rojo) */
+  --a-50: 254 251 235;
+  --a-100: 254 243 199;
+  --a-200: 253 230 138;
+  --a-300: 252 211 77;
+  --a-400: 251 191 36;
+  --a-500: 245 158 11;
+  --a-600: 217 119 6;
+  --a-700: 180 83 9;
+  --a-800: 146 64 14;
+  --a-900: 120 53 15;
+
+  --r-50: 254 242 242;
+  --r-100: 254 226 226;
+  --r-200: 254 202 202;
+  --r-300: 252 165 165;
+  --r-400: 248 113 113;
+  --r-500: 239 68 68;
+  --r-600: 220 38 38;
+  --r-700: 185 28 28;
+  --r-800: 153 27 27;
+  --r-900: 127 29 29;
+
+  /* Verde de marca para superficies sólidas (botón, píldoras, sello). */
+  --marca: 35 90 55;
+  --marca-fg: 255 255 255;
+
+  color-scheme: light;
+}
+
+/* Tema oscuro: la escala invierte su sentido — 50 es la superficie más
+   oscura y 950 el texto de mayor contraste. Los pasos intermedios se eligen
+   por rol, no por monotonía. */
+.dark {
+  --e-50: 16 26 20;
+  --e-100: 22 36 27;
+  --e-200: 29 47 35;
+  --e-300: 42 68 51;
+  --e-400: 60 102 73;
+  --e-500: 78 140 97;
+  --e-600: 62 122 82;
+  --e-700: 111 191 140;
+  --e-800: 168 195 174;
+  --e-900: 203 218 207;
+  --e-950: 234 241 234;
+
+  --background: #0e1611;
+  --foreground: #eaf1ea;
+  --superficie: #17231c;
+  --regla: #2a4433;
+  --muted: #a8c3ae;
+
+  /* Avisos y alertas: en oscuro el fondo se oscurece y el texto se aclara. */
+  --a-50: 69 46 8;
+  --a-100: 88 59 10;
+  --a-200: 120 79 12;
+  --a-300: 154 101 16;
+  --a-400: 187 128 20;
+  --a-500: 217 148 24;
+  --a-600: 253 230 138;
+  --a-700: 253 230 138;
+  --a-800: 254 240 202;
+  --a-900: 255 247 237;
+
+  --r-50: 69 26 26;
+  --r-100: 91 33 33;
+  --r-200: 122 44 44;
+  --r-300: 153 55 55;
+  --r-400: 185 66 66;
+  --r-500: 220 38 38;
+  --r-600: 254 202 202;
+  --r-700: 254 202 202;
+  --r-800: 254 226 226;
+  --r-900: 254 242 242;
+
+  --marca: 46 107 69;
+  --marca-fg: 255 255 255;
+
+  color-scheme: dark;
+}
+
+/* La etiqueta QR es un artefacto imprimible: se mantiene siempre en claro
+   (el QR necesita fondo blanco para leerse) re-declarando la paleta clara
+   dentro de su contenedor. */
+.ficha-impresa {
+  --e-50: 241 246 241;
+  --e-100: 225 237 227;
+  --e-200: 198 220 203;
+  --e-300: 159 197 170;
+  --e-400: 109 164 126;
+  --e-500: 70 135 91;
+  --e-600: 47 109 68;
+  --e-700: 35 90 55;
+  --e-800: 27 71 41;
+  --e-900: 20 53 31;
+  --e-950: 11 33 20;
+  --background: #f6f7f3;
+  --foreground: #14201a;
+  --superficie: #ffffff;
+  --regla: #e3e8df;
+  --muted: #5e6b61;
+  --marca: 35 90 55;
+  --marca-fg: 255 255 255;
+  --a-50: 254 251 235;
+  --a-100: 254 243 199;
+  --a-200: 253 230 138;
+  --a-300: 252 211 77;
+  --a-400: 251 191 36;
+  --a-500: 245 158 11;
+  --a-600: 217 119 6;
+  --a-700: 180 83 9;
+  --a-800: 146 64 14;
+  --a-900: 120 53 15;
+  --r-50: 254 242 242;
+  --r-100: 254 226 226;
+  --r-200: 254 202 202;
+  --r-300: 252 165 165;
+  --r-400: 248 113 113;
+  --r-500: 239 68 68;
+  --r-600: 220 38 38;
+  --r-700: 185 28 28;
+  --r-800: 153 27 27;
+  --r-900: 127 29 29;
+  /* El texto heredado también vuelve a oscuro dentro de la etiqueta. */
+  color: var(--foreground);
+  color-scheme: light;
 }
 
 body {
@@ -23,19 +168,21 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    background-color: rgb(var(--marca));
+    color: rgb(var(--marca-fg));
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-900/20 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-800 transition hover:border-emerald-700/40 hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-900/20 bg-superficie px-5 py-2.5 text-sm font-semibold text-emerald-800 transition hover:border-emerald-700/40 hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700;
   }
   .card {
-    @apply rounded-card border border-emerald-900/10 bg-white p-6;
+    @apply rounded-card border border-emerald-900/10 bg-superficie p-6;
   }
   .badge {
     @apply inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold;
   }
   .input {
-    @apply w-full rounded-lg border border-emerald-900/15 bg-white px-4 py-2.5 text-sm text-emerald-950 outline-none transition placeholder:text-emerald-900/35 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15;
+    @apply w-full rounded-lg border border-emerald-900/15 bg-superficie px-4 py-2.5 text-sm text-emerald-950 outline-none transition placeholder:text-emerald-900/35 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15;
   }
   .label {
     @apply mb-1.5 block text-[13px] font-semibold text-emerald-950;
@@ -51,7 +198,14 @@ body {
   }
   /* Sello circular de verificación. */
   .sello {
-    @apply inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white;
+    @apply inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full;
+    background-color: rgb(var(--marca));
+    color: rgb(var(--marca-fg));
+  }
+  /* Superficie de marca (píldoras activas, pasos completados). */
+  .marca {
+    background-color: rgb(var(--marca));
+    color: rgb(var(--marca-fg));
   }
 }
 
