@@ -101,8 +101,15 @@ export default function Nav() {
         esProductor ? "md:hidden" : ""
       }`}
     >
-      <div className="relative mx-auto flex max-w-5xl items-center justify-center gap-4 px-4 py-3 md:justify-between">
-        <Link href="/" aria-label="AgroTrace Rural — ir al inicio">
+      {/* Móvil: la marca a la izquierda y los iconos agrupados a la derecha,
+          en el flujo normal (nunca superpuestos). Escritorio: marca a la
+          izquierda y barra de navegación a la derecha. */}
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+        <Link
+          href="/"
+          aria-label="AgroTrace Rural — ir al inicio"
+          className="min-w-0 shrink-0"
+        >
           <Logo />
         </Link>
 
@@ -153,7 +160,7 @@ export default function Nav() {
         )}
 
         {/* Móvil (< md): conmutador de tema, ayuda y hamburguesa */}
-        <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-0.5 md:hidden">
+        <div className="flex shrink-0 items-center gap-0.5 md:hidden">
           <ThemeToggle />
           <MenuAyuda />
           <button
@@ -181,7 +188,7 @@ export default function Nav() {
       {menuAbierto && (
         <nav
           id="menu-movil"
-          className="max-h-[80vh] overflow-y-auto border-t border-emerald-900/10 bg-superficie px-4 py-4 md:hidden"
+          className="max-h-[80vh] overflow-y-auto border-t border-emerald-900/10 bg-superficie/85 backdrop-blur px-4 py-4 md:hidden"
         >
           <MenuNavegacion variante="movil" onNavegar={() => setMenuAbierto(false)} />
           {sesionMovil}

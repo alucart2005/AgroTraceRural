@@ -69,7 +69,7 @@ export default function MenuAyuda() {
       </button>
 
       {abierto && (
-        <div className="absolute right-0 z-50 mt-2 w-72 rounded-card border border-emerald-900/10 bg-superficie p-2">
+        <div className="panel absolute right-0 z-50 mt-2 w-72 p-2">
           <ul className="grid gap-0.5">
             {enlaces.map((enlace) => (
               <li key={enlace.href}>

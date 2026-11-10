@@ -27,9 +27,14 @@
 
   --background: #f6f7f3;
   --foreground: #14201a;
-  --superficie: #ffffff;
-  --regla: #e3e8df;
-  --muted: #5e6b61;
+  /* Superficie y filetes en trípletes RGB: las consume Tailwind como
+     rgb(var(--superficie) / <alpha-value>) y un hex haría inválida la
+     declaración (el elemento quedaba transparente). */
+  --superficie: 255 255 255;
+  --regla: 227 232 223;
+  --muted: 94 107 97;
+  /* Sombra de los paneles flotantes (menú de ayuda). */
+  --sombra: 11 33 20;
 
   /* Avisos (ámbar) y alertas (rojo) */
   --a-50: 254 251 235;
@@ -79,9 +84,10 @@
 
   --background: #0e1611;
   --foreground: #eaf1ea;
-  --superficie: #17231c;
-  --regla: #2a4433;
-  --muted: #a8c3ae;
+  --superficie: 23 35 28;
+  --regla: 42 68 51;
+  --muted: 168 195 174;
+  --sombra: 0 0 0;
 
   /* Avisos y alertas: en oscuro el fondo se oscurece y el texto se aclara. */
   --a-50: 69 46 8;
@@ -129,9 +135,13 @@
   --e-950: 11 33 20;
   --background: #f6f7f3;
   --foreground: #14201a;
-  --superficie: #ffffff;
-  --regla: #e3e8df;
-  --muted: #5e6b61;
+  /* Superficie y filetes en trípletes RGB: las consume Tailwind como
+     rgb(var(--superficie) / <alpha-value>) y un hex haría inválida la
+     declaración (el elemento quedaba transparente). */
+  --superficie: 255 255 255;
+  --regla: 227 232 223;
+  --muted: 94 107 97;
+  --sombra: 11 33 20;
   --marca: 35 90 55;
   --marca-fg: 255 255 255;
   --a-50: 254 251 235;
@@ -206,6 +216,12 @@ body {
   .marca {
     background-color: rgb(var(--marca));
     color: rgb(var(--marca-fg));
+  }
+
+  /* Panel flotante: se despega del contenido con sombra suave. */
+  .panel {
+    @apply rounded-card border border-emerald-900/15 bg-superficie;
+    box-shadow: 0 12px 32px -16px rgb(var(--sombra) / 0.45);
   }
 
   /* Recuadro de contenido (manual, avisos de página). */

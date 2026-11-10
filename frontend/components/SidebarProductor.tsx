@@ -30,7 +30,7 @@ export default function SidebarProductor() {
   }
 
   return (
-    <aside className="no-print hidden w-full shrink-0 flex-col rounded-card border border-emerald-900/10 bg-superficie p-4 md:sticky md:top-6 md:flex md:max-h-[calc(100vh-3rem)] md:w-64 md:self-start">
+    <aside className="no-print hidden w-full shrink-0 flex-col rounded-card border border-emerald-900/10 bg-superficie/85 p-4 backdrop-blur md:sticky md:top-6 md:flex md:max-h-[calc(100vh-3rem)] md:w-64 md:self-start">
       <Link
         href="/"
         className="border-b border-emerald-900/10 px-2 pb-4"
