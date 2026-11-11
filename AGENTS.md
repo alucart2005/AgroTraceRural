@@ -194,6 +194,11 @@ navegador: `NEXT_PUBLIC_API_KEY` es **pública**, no un secreto.
   `docs/semana2/KanbanBacklog.md`.
 - Producto piloto: huevos de Finca Guarumo, Cáceres (Antioquia). Código de
   lote `HUE-YYYY-NNN`, secuencial por año.
-- Las 8 historias viven en `docs/backlog/IssuesListos.md` (HU-01..HU-05) y en
-  `docs/backlog/BacklogAuthGoogle.md` (HU-06..HU-08, trilingüe), y en
-  GitHub Issues #1..#8.
+- Las 23 historias viven en `docs/backlog/` — `IssuesListos.md` (HU-01..HU-05,
+  español), `BacklogAuthGoogle.md` (HU-06..HU-08),
+  `BacklogInfraProduccion.md` (HU-09..HU-13), `BacklogEstabilidadBackend.md`
+  (HU-14..HU-15) y `BacklogRedisenoVisual.md` (HU-16..HU-23), las cuatro
+  últimas trilingües — y en GitHub Issues #1..#23. El tablero es el
+  [proyecto #14](https://github.com/users/alucart2005/projects/14), con
+  roadmap de 5 entregas (milestones cerrados) y `Priority`/`Size`/fechas
+  reales por historia.
