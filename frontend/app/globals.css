@@ -250,6 +250,21 @@ body {
   }
 }
 
+/* Hoja de impresión de la etiqueta QR: 6 etiquetas en cuadrícula 2×3.
+   Carta (216×279 mm) con margen de 10 mm → 196×259 mm útiles; dos columnas
+   de 94 mm y tres filas de 81 mm con 8 mm de separación para guillotinar.
+   Oculta en pantalla: solo aparece dentro de @media print. */
+.hoja-impresion {
+  display: none;
+}
+
+/* Carta con margen de corte: el tamaño y el margen los manda @page, no el
+   formato del diálogo de imprimir. */
+@page {
+  size: letter;
+  margin: 10mm;
+}
+
 @media print {
   .no-print {
     display: none !important;
@@ -259,5 +274,30 @@ body {
   }
   .print-only {
     display: block !important;
+  }
+
+  /* El <main> aporta su propio padding en pantalla; al imprimir el margen
+     lo pone @page y cualquier píxel de más empujaría la hoja a una segunda
+     página en blanco. */
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    min-height: 0 !important;
+  }
+
+  /* La única cosa impresa: la cuadrícula 2×3, a tamaño exacto de la caja
+     útil de la página. print-color-adjust conserva los filetes punteados y
+     el fondo blanco del QR. */
+  .hoja-impresion {
+    display: grid !important;
+    grid-template-columns: repeat(2, 94mm);
+    grid-template-rows: repeat(3, 81mm);
+    gap: 8mm;
+    width: 196mm;
+    height: 259mm;
+    margin: 0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
