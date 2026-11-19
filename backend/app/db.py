@@ -67,6 +67,7 @@ def asegurar_columnas_sqlite() -> None:
             "anclaje_error": "TEXT",
             "intentos_anclaje": "INTEGER NOT NULL DEFAULT 0",
             "ultimo_intento_at": "DATETIME",
+            "oculto": "BOOLEAN NOT NULL DEFAULT 0",
         }
         for nombre, ddl in nuevas_lotes.items():
             if nombre not in columnas:

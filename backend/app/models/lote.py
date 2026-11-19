@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text, false, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -54,6 +54,12 @@ class Lote(Base):
     # nullable: los lotes previos a la autenticación no tienen dueño.
     usuario_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("usuarios.id", ondelete="SET NULL"), index=True
+    )
+    # Moderación suave: un lote oculto desaparece de listados, ficha y QR, pero
+    # no se borra ni se altera. Fuera del hash canónico (no afecta la
+    # verificación) y reversible con ``oculto = false``.
+    oculto: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false(), nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_ahora, server_default=func.now()

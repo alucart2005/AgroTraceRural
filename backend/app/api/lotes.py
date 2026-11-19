@@ -52,7 +52,14 @@ ESCRITURA = [Depends(require_api_key)]
 
 
 def _obtener(db: Session, codigo: str) -> Lote:
-    lote = db.scalar(select(Lote).where(Lote.codigo == codigo))
+    """Lote por código, excluyendo los ocultos (moderación suave).
+
+    Un lote oculto responde 404 igual que uno inexistente: así deja de resolver
+    el QR y no se puede escribir sobre él. Reversible con ``oculto = false``.
+    """
+    lote = db.scalar(
+        select(Lote).where(Lote.codigo == codigo, Lote.oculto.is_(False))
+    )
     if lote is None:
         raise HTTPException(status_code=404, detail=f"Lote {codigo} no encontrado")
     return lote
@@ -119,8 +126,10 @@ def listar_lotes(
     """HU-05/HU-30: listado público paginado (incluye lotes de todos)."""
     return _paginar(
         db,
-        select(Lote).order_by(Lote.created_at.desc(), Lote.id.desc()),
-        select(func.count()).select_from(Lote),
+        select(Lote)
+        .where(Lote.oculto.is_(False))
+        .order_by(Lote.created_at.desc(), Lote.id.desc()),
+        select(func.count()).select_from(Lote).where(Lote.oculto.is_(False)),
         limit,
         offset,
         response,
@@ -142,9 +151,11 @@ def listar_mis_lotes(
     return _paginar(
         db,
         select(Lote)
-        .where(Lote.usuario_id == usuario.id)
+        .where(Lote.usuario_id == usuario.id, Lote.oculto.is_(False))
         .order_by(Lote.created_at.desc(), Lote.id.desc()),
-        select(func.count()).select_from(Lote).where(Lote.usuario_id == usuario.id),
+        select(func.count())
+        .select_from(Lote)
+        .where(Lote.usuario_id == usuario.id, Lote.oculto.is_(False)),
         limit,
         offset,
         response,

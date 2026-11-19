@@ -17,7 +17,7 @@ Frontend (`frontend/`):
 
 Backend (`backend/`, ejecutar desde ahí para que resuelvan los imports `app.*`):
 - Setup: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
-- `.venv/bin/python -m pytest -q` — **88 tests**, todos con R2 y Stellar simulados (sin red, sin BD; el ID token de Google se simula)
+- `.venv/bin/python -m pytest -q` — **91 tests**, todos con R2 y Stellar simulados (sin red, sin BD; el ID token de Google se simula)
 - `uvicorn app.main:app --reload` — API en :8000
 - `alembic upgrade head` — migra la base configurada en `DATABASE_URL`
 - `python -m scripts.anchor_demo` — ancla y verifica de verdad en Testnet (necesita `STELLAR_SECRET_KEY`; crea una transacción real)
@@ -50,7 +50,8 @@ municipio, `fotos` JSON con URLs de R2, `evidencias` JSON `[{nombre,tamano}]`,
 hash_sha256, stellar_tx_hash, stellar_ledger, `usuario_id` FK **nullable**
 (fuera del hash), `anclaje_estado` (`pendiente|anclado|fallido|
 fallido_definitivo`), `anclaje_error`, `intentos_anclaje`, `ultimo_intento_at`,
-created_at) y `Evento` (tipo/fecha/descripcion, `hash_evento` y
+`oculto` (moderación suave, fuera del hash), created_at) y `Evento`
+(tipo/fecha/descripcion, `hash_evento` y
 `hash_evento_anterior` de la cadena de custodia, clave foránea a lote con
 `ON DELETE CASCADE`).
 
@@ -62,8 +63,8 @@ constraints).
 
 Migraciones de las entregas 6–8: `0003_anclaje` (estado del ancla; marca
 `anclado` los lotes que ya tenían `stellar_tx_hash`) y `0004_cadena_eventos`
-(columnas de la cadena + backfill en orden de `id`). Ambas usan
-`batch_alter_table` y su `downgrade` está probado.
+(columnas de la cadena + backfill en orden de `id`). `0005_oculto` añade la
+moderación suave. Todas usan `batch_alter_table` y su `downgrade` está probado.
 
 `lifespan` ejecuta `Base.metadata.create_all`, luego `asegurar_columnas_sqlite()`
 (agrega a un SQLite ya existente las columnas que `create_all` no añade a tablas
@@ -108,6 +109,13 @@ credenciales; si `API_KEY` está vacía, esos endpoints internos quedan abiertos
 CORS, ya está en `expose_headers`). `GET /api/verify/{codigo}` cachea solo la
 respuesta de Horizon por `codigo` (`app/services/verify_cache.py`, TTL
 `VERIFY_CACHE_TTL`) mientras el hash y la cadena se recalculan siempre (HU-29).
+
+**Lotes ocultos (moderación suave).** `lotes.oculto = true` (migración
+`0005_oculto`, columna **fuera** del hash) hace que el lote se comporte como
+inexistente: no sale en ningún listado y `GET /api/lotes/{codigo}`,
+`/eventos`, `/anclar` y `/api/verify/{codigo}` responden **404**. No borra nada
+ni invalida la transacción on-chain; se revierte con `oculto = false` (no hay
+endpoint: se hace por SQL, es una operación de operación/moderación).
 
 El QR **no** tiene endpoint propio: la etiqueta se genera en el navegador con
 `qrcode.react` en `/lote/[id]/etiqueta` (HU-04).
