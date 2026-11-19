@@ -8,7 +8,7 @@
 [![Colombia](https://img.shields.io/badge/Made%20in-Colombia-yellow)](#)
 [![Vercel](https://img.shields.io/badge/Deployed-Vercel-black)](https://frontend-2mx1.vercel.app)
 [![Backend](https://img.shields.io/badge/Backend-FastAPI%20on%20Render-0d9488)](https://agrotrace-backend-z3q1.onrender.com)
-[![Tests](https://img.shields.io/badge/Backend-50%20tests%20pytest-brightgreen)](#-cómo-ejecutar-el-proyecto)
+[![Tests](https://img.shields.io/badge/Backend-88%20tests%20pytest-brightgreen)](#-cómo-ejecutar-el-proyecto)
 
 > 🌐 **¡La app ya está en línea! / The app is live! / O app já está no ar!**
 > 👉 **Frontend:** **[https://frontend-2mx1.vercel.app](https://frontend-2mx1.vercel.app)**
@@ -161,7 +161,7 @@ Gallinas GAL-001
        ↓
 Producción diaria
        ↓
-Lote HUE-2027-001
+Lote HUE-2026-008
        ↓
 Clasificación → Empaque → Generación QR
        ↓
@@ -175,7 +175,7 @@ Cliente
 El cliente consulta:
 
 ```text
-https://agrotrace.example/lote/HUE-2027-001
+https://agrotrace.example/lote/HUE-2026-008
 ```
 
 La página muestra la información pública del lote y un **indicador de verificación**.
@@ -352,7 +352,7 @@ La plataforma **no reemplaza** los registros oficiales: es una **capa tecnológi
 | Almacenamiento | Cloudflare R2 (evidencias **fuera** de la blockchain) |
 | Blockchain | Stellar Testnet — solo el SHA-256 viaja on-chain, como *Memo Hash* |
 | Despliegue | Vercel (frontend) · Render + Docker (backend) |
-| Pruebas | 50 tests pytest (R2 y Stellar simulados, sin red) |
+| Pruebas | 88 tests pytest (R2 y Stellar simulados, sin red) |
 
 #### 1) Frontend (`frontend/`)
 
@@ -365,7 +365,7 @@ npm install
 npm run dev        # abre http://localhost:3000
 ```
 
-- **Modo demo (por defecto):** sin backend configurado, el frontend usa datos de ejemplo en el navegador (localStorage) y lo **anuncia en la interfaz**. Recorre el flujo completo: `/productor/nuevo` (HU-01) → etiqueta QR (HU-04) → `/lote/HUE-2027-001` con verificación on-chain (HU-03). Las escrituras nunca se guardan en modo fantasma.
+- **Modo demo (por defecto):** sin backend configurado, el frontend usa datos de ejemplo en el navegador (localStorage) y lo **anuncia en la interfaz**. Recorre el flujo completo: `/productor/nuevo` (HU-01) → etiqueta QR (HU-04) → `/lote/HUE-2026-008` con verificación on-chain (HU-03). Las escrituras nunca se guardan en modo fantasma.
 - **Con backend:** copia `frontend/.env.example` a `frontend/.env.local` y define `NEXT_PUBLIC_API_URL` (FastAPI, **sin sufijo `/api`**: `http://localhost:8000`), `NEXT_PUBLIC_API_KEY` y `NEXT_PUBLIC_SITE_URL`.
 - **Verificación:** no hay ejecutor de tests en el frontend; validar con `npm run lint` y `npm run build` (el build es también la comprobación de tipos).
 - **Build de producción:** `npm run build && npm run start` dentro de `frontend/`.
@@ -383,21 +383,27 @@ uvicorn app.main:app --reload # abre http://localhost:8000/docs (Swagger)
 ```
 
 - **Base de datos:** si `DATABASE_URL` está vacía se usa **SQLite local** (`agrotrace_local.db`, ignorado por git). En producción va la URL de **Neon**; en Render usa el *pooler* (el que termina en `-pooler`). Migraciones: `alembic upgrade head`.
-- **Pruebas:** `python -m pytest -q` → **50 tests** con R2 y Stellar simulados (sin red, sin base de datos externa).
-- **Stellar (opcional):** `python -m scripts.stellar_account create` genera y fondea la cuenta de Testnet; `python -m scripts.anchor_demo` ancla y verifica de verdad (crea una transacción real).
+- **Pruebas:** `python -m pytest -q` → **88 tests** con R2 y Stellar simulados (sin red, sin base de datos externa).
+- **Stellar (opcional):** `python -m scripts.stellar_account create` genera y fondea la cuenta de Testnet; `python -m scripts.anchor_demo` ancla y verifica de verdad (crea una transacción real); `python -m scripts.reintentar_anclajes` corre una pasada del job de reintento del ancla (el cron de Render lo ejecuta cada 10 min).
 
 #### 3) API
 
 | Método | Ruta | Auth | Historia |
 |---|---|---|---|
 | `GET` | `/api/health` | — | Health check |
-| `POST` | `/api/lotes` | `X-API-Key` | HU-01 |
-| `GET` | `/api/lotes` · `/api/lotes/{codigo}` | — | HU-05 / HU-02 |
-| `GET`/`POST` | `/api/lotes/{codigo}/eventos` | GET abierto · POST con clave | HU-05 |
-| `POST` | `/api/lotes/{codigo}/anclar` | `X-API-Key` | Reintento de anclaje |
-| `GET` | `/api/verify/{codigo}` | — | HU-03 |
+| `POST` | `/api/lotes` | Bearer JWT | HU-01 · HU-08 · HU-24 |
+| `GET` | `/api/lotes?limit&offset` · `/api/lotes/{codigo}` | — | HU-05 · HU-30 / HU-02 |
+| `GET` | `/api/lotes/mios?limit&offset` | Bearer JWT | HU-08 · HU-30 |
+| `GET` | `/api/lotes/{codigo}/eventos` | — | HU-05 |
+| `POST` | `/api/lotes/{codigo}/eventos` | Bearer JWT (dueño) | HU-05 · HU-27 |
+| `POST` | `/api/lotes/{codigo}/eventos/interno` | `X-API-Key` | HU-27 (solo lotes sin dueño) |
+| `POST` | `/api/lotes/{codigo}/anclar` | Bearer JWT (dueño) | HU-25 |
+| `GET` | `/api/verify/{codigo}` | — | HU-03 · HU-28 · HU-29 |
+| `POST` | `/api/verify` | `X-API-Key` | Auditoría de una tx suelta |
 
-Las lecturas quedan abiertas para que el QR del consumidor funcione sin credenciales; solo las escrituras exigen `X-API-Key`.
+Las lecturas quedan abiertas para que el QR del consumidor funcione sin credenciales. El registro de lotes y las escrituras sobre un lote exigen la **sesión del productor** (JWT tras el ingreso con Google); la `X-API-Key` solo abre escrituras internas sin usuario detrás.
+
+**Entregas 6–8 (HU-24..HU-31):** el ancla se registra en segundo plano (el `201` no espera a Horizon; un cron reintenta cada 10 min con tope de 5 intentos) y la interfaz muestra su estado con opción de reintento manual; cada evento encadena el hash del anterior (`hash_evento`) y la verificación exige hash + ancla + cadena intacta; los listados soportan paginación (`X-Total-Count`) y hay límites anti-abuso (cuerpo ≤ 8 MB → `413`; tasa por IP → `429` con `Retry-After`).
 
 #### 4) Despliegue
 
@@ -560,7 +566,7 @@ Hens GAL-001
        ↓
 Daily production
        ↓
-Batch HUE-2027-001
+Batch HUE-2026-008
        ↓
 Sorting → Packing → QR generation
        ↓
@@ -574,7 +580,7 @@ Customer
 The customer visits:
 
 ```text
-https://agrotrace.example/lote/HUE-2027-001
+https://agrotrace.example/lote/HUE-2026-008
 ```
 
 The page shows the public information of the batch and a **verification indicator**.
@@ -751,7 +757,7 @@ The platform **does not replace** official records: it is a **complementary tech
 | Storage | Cloudflare R2 (evidence kept **off** the blockchain) |
 | Blockchain | Stellar Testnet — only the SHA-256 hash travels on-chain, as a *Memo Hash* |
 | Deployment | Vercel (frontend) · Render + Docker (backend) |
-| Testing | 50 pytest tests (mocked R2 and Stellar, no network) |
+| Testing | 88 pytest tests (mocked R2 and Stellar, no network) |
 
 #### 1) Frontend (`frontend/`)
 
@@ -764,7 +770,7 @@ npm install
 npm run dev        # open http://localhost:3000
 ```
 
-- **Demo mode (default):** with no backend configured, the frontend uses sample data in the browser (localStorage) and **announces it in the UI**. Walk the full flow: `/productor/nuevo` (HU-01) → QR label (HU-04) → `/lote/HUE-2027-001` with on-chain verification (HU-03). Writes are never silently stored in demo mode.
+- **Demo mode (default):** with no backend configured, the frontend uses sample data in the browser (localStorage) and **announces it in the UI**. Walk the full flow: `/productor/nuevo` (HU-01) → QR label (HU-04) → `/lote/HUE-2026-008` with on-chain verification (HU-03). Writes are never silently stored in demo mode.
 - **With a backend:** copy `frontend/.env.example` to `frontend/.env.local` and set `NEXT_PUBLIC_API_URL` (FastAPI, **without the `/api` suffix**: `http://localhost:8000`), `NEXT_PUBLIC_API_KEY` and `NEXT_PUBLIC_SITE_URL`.
 - **Verification:** there is no test runner in the frontend; validate with `npm run lint` and `npm run build` (the build is also the type check).
 - **Production build:** `npm run build && npm run start` inside `frontend/`.
@@ -782,21 +788,27 @@ uvicorn app.main:app --reload # open http://localhost:8000/docs (Swagger)
 ```
 
 - **Database:** with an empty `DATABASE_URL` a **local SQLite** is used (`agrotrace_local.db`, git-ignored). In production it points to **Neon**; on Render use the *pooler* URL (the one ending in `-pooler`). Migrations: `alembic upgrade head`.
-- **Tests:** `python -m pytest -q` → **50 tests** with mocked R2 and Stellar (no network, no external database).
-- **Stellar (optional):** `python -m scripts.stellar_account create` generates and funds the Testnet account; `python -m scripts.anchor_demo` anchors and verifies for real (creates a live transaction).
+- **Tests:** `python -m pytest -q` → **88 tests** with mocked R2 and Stellar (no network, no external database).
+- **Stellar (optional):** `python -m scripts.stellar_account create` generates and funds the Testnet account; `python -m scripts.anchor_demo` anchors and verifies for real (creates a live transaction); `python -m scripts.reintentar_anclajes` runs one pass of the anchor retry job (the Render cron runs it every 10 min).
 
 #### 3) API
 
 | Method | Route | Auth | Story |
 |---|---|---|---|
 | `GET` | `/api/health` | — | Health check |
-| `POST` | `/api/lotes` | `X-API-Key` | HU-01 |
-| `GET` | `/api/lotes` · `/api/lotes/{codigo}` | — | HU-05 / HU-02 |
-| `GET`/`POST` | `/api/lotes/{codigo}/eventos` | GET open · POST with key | HU-05 |
-| `POST` | `/api/lotes/{codigo}/anclar` | `X-API-Key` | Anchoring retry |
-| `GET` | `/api/verify/{codigo}` | — | HU-03 |
+| `POST` | `/api/lotes` | Bearer JWT | HU-01 · HU-08 · HU-24 |
+| `GET` | `/api/lotes?limit&offset` · `/api/lotes/{codigo}` | — | HU-05 · HU-30 / HU-02 |
+| `GET` | `/api/lotes/mios?limit&offset` | Bearer JWT | HU-08 · HU-30 |
+| `GET` | `/api/lotes/{codigo}/eventos` | — | HU-05 |
+| `POST` | `/api/lotes/{codigo}/eventos` | Bearer JWT (owner) | HU-05 · HU-27 |
+| `POST` | `/api/lotes/{codigo}/eventos/interno` | `X-API-Key` | HU-27 (ownerless batches only) |
+| `POST` | `/api/lotes/{codigo}/anclar` | Bearer JWT (owner) | HU-25 |
+| `GET` | `/api/verify/{codigo}` | — | HU-03 · HU-28 · HU-29 |
+| `POST` | `/api/verify` | `X-API-Key` | Audit of a standalone tx |
 
-Reads stay open so the consumer QR works without credentials; only writes require `X-API-Key`.
+Reads stay open so the consumer QR works without credentials. Batch registration and writes on a batch require the **producer session** (JWT after Google sign-in); the `X-API-Key` only opens internal writes with no user behind them.
+
+**Deliveries 6–8 (HU-24..HU-31):** the anchor is recorded in the background (the `201` does not wait for Horizon; a cron retries every 10 min with a cap of 5 attempts) and the UI shows its state with a manual retry; every event chains the previous one's hash (`hash_evento`) and verification requires hash + anchor + intact chain; listings support pagination (`X-Total-Count`) and abuse limits are in place (body ≤ 8 MB → `413`; per-IP rate → `429` with `Retry-After`).
 
 #### 4) Deployment
 
@@ -959,7 +971,7 @@ Galinhas GAL-001
        ↓
 Produção diária
        ↓
-Lote HUE-2027-001
+Lote HUE-2026-008
        ↓
 Classificação → Embalagem → Geração de QR
        ↓
@@ -973,7 +985,7 @@ Cliente
 O cliente consulta:
 
 ```text
-https://agrotrace.example/lote/HUE-2027-001
+https://agrotrace.example/lote/HUE-2026-008
 ```
 
 A página mostra a informação pública do lote e um **indicador de verificação**.
@@ -1150,7 +1162,7 @@ A plataforma **não substitui** os registros oficiais: é uma **camada tecnológ
 | Armazenamento | Cloudflare R2 (evidências **fora** da blockchain) |
 | Blockchain | Stellar Testnet — apenas o hash SHA-256 viaja on-chain, como *Memo Hash* |
 | Implantação | Vercel (frontend) · Render + Docker (backend) |
-| Testes | 50 testes pytest (R2 e Stellar simulados, sem rede) |
+| Testes | 88 testes pytest (R2 e Stellar simulados, sem rede) |
 
 #### 1) Frontend (`frontend/`)
 
@@ -1163,7 +1175,7 @@ npm install
 npm run dev        # abra http://localhost:3000
 ```
 
-- **Modo demo (padrão):** sem backend configurado, o frontend usa dados de exemplo no navegador (localStorage) e **anuncia isso na interface**. Percorra o fluxo completo: `/productor/nuevo` (HU-01) → etiqueta QR (HU-04) → `/lote/HUE-2027-001` com verificação on-chain (HU-03). As gravações nunca são salvas silenciosamente no modo fantasma.
+- **Modo demo (padrão):** sem backend configurado, o frontend usa dados de exemplo no navegador (localStorage) e **anuncia isso na interface**. Percorra o fluxo completo: `/productor/nuevo` (HU-01) → etiqueta QR (HU-04) → `/lote/HUE-2026-008` com verificação on-chain (HU-03). As gravações nunca são salvas silenciosamente no modo fantasma.
 - **Com backend:** copie `frontend/.env.example` para `frontend/.env.local` e defina `NEXT_PUBLIC_API_URL` (FastAPI, **sem sufixo `/api`**: `http://localhost:8000`), `NEXT_PUBLIC_API_KEY` e `NEXT_PUBLIC_SITE_URL`.
 - **Verificação:** não há executor de testes no frontend; valide com `npm run lint` e `npm run build` (o build também é a checagem de tipos).
 - **Build de produção:** `npm run build && npm run start` dentro de `frontend/`.
@@ -1181,21 +1193,27 @@ uvicorn app.main:app --reload # abra http://localhost:8000/docs (Swagger)
 ```
 
 - **Banco de dados:** com `DATABASE_URL` vazio usa-se **SQLite local** (`agrotrace_local.db`, ignorado pelo git). Em produção aponta para **Neon**; no Render use a URL do *pooler* (a que termina em `-pooler`). Migrações: `alembic upgrade head`.
-- **Testes:** `python -m pytest -q` → **50 testes** com R2 e Stellar simulados (sem rede, sem banco externo).
-- **Stellar (opcional):** `python -m scripts.stellar_account create` gera e financia a conta de Testnet; `python -m scripts.anchor_demo` ancora e verifica de verdade (cria uma transação real).
+- **Testes:** `python -m pytest -q` → **88 testes** com R2 e Stellar simulados (sem rede, sem banco externo).
+- **Stellar (opcional):** `python -m scripts.stellar_account create` gera e financia a conta de Testnet; `python -m scripts.anchor_demo` ancora e verifica de verdade (cria uma transação real); `python -m scripts.reintentar_anclajes` roda uma passada do job de reintento da âncora (o cron do Render o executa a cada 10 min).
 
 #### 3) API
 
 | Método | Rota | Auth | História |
 |---|---|---|---|
 | `GET` | `/api/health` | — | Health check |
-| `POST` | `/api/lotes` | `X-API-Key` | HU-01 |
-| `GET` | `/api/lotes` · `/api/lotes/{codigo}` | — | HU-05 / HU-02 |
-| `GET`/`POST` | `/api/lotes/{codigo}/eventos` | GET aberto · POST com chave | HU-05 |
-| `POST` | `/api/lotes/{codigo}/anclar` | `X-API-Key` | Nova tentativa de ancoragem |
-| `GET` | `/api/verify/{codigo}` | — | HU-03 |
+| `POST` | `/api/lotes` | Bearer JWT | HU-01 · HU-08 · HU-24 |
+| `GET` | `/api/lotes?limit&offset` · `/api/lotes/{codigo}` | — | HU-05 · HU-30 / HU-02 |
+| `GET` | `/api/lotes/mios?limit&offset` | Bearer JWT | HU-08 · HU-30 |
+| `GET` | `/api/lotes/{codigo}/eventos` | — | HU-05 |
+| `POST` | `/api/lotes/{codigo}/eventos` | Bearer JWT (dono) | HU-05 · HU-27 |
+| `POST` | `/api/lotes/{codigo}/eventos/interno` | `X-API-Key` | HU-27 (apenas lotes sem dono) |
+| `POST` | `/api/lotes/{codigo}/anclar` | Bearer JWT (dono) | HU-25 |
+| `GET` | `/api/verify/{codigo}` | — | HU-03 · HU-28 · HU-29 |
+| `POST` | `/api/verify` | `X-API-Key` | Auditoria de uma tx solta |
 
-As leituras ficam abertas para que o QR do consumidor funcione sem credenciais; apenas as gravações exigem `X-API-Key`.
+As leituras ficam abertas para que o QR do consumidor funcione sem credenciais. O registro de lotes e as gravações sobre um lote exigem a **sessão do produtor** (JWT após o login com Google); a `X-API-Key` só abre gravações internas sem usuário por trás.
+
+**Entregas 6–8 (HU-24..HU-31):** a âncora é registrada em segundo plano (o `201` não espera o Horizon; um cron reintenta a cada 10 min com limite de 5 tentativas) e a interface mostra o estado com reintento manual; cada evento encadeia o hash do anterior (`hash_evento`) e a verificação exige hash + âncora + cadeia intacta; os listados suportam paginação (`X-Total-Count`) e há limites anti-abuso (corpo ≤ 8 MB → `413`; taxa por IP → `429` com `Retry-After`).
 
 #### 4) Implantação
 
