@@ -17,10 +17,11 @@ Frontend (`frontend/`):
 
 Backend (`backend/`, ejecutar desde ahí para que resuelvan los imports `app.*`):
 - Setup: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
-- `.venv/bin/python -m pytest -q` — **68 tests**, todos con R2 y Stellar simulados (sin red, sin BD; el ID token de Google se simula)
+- `.venv/bin/python -m pytest -q` — **88 tests**, todos con R2 y Stellar simulados (sin red, sin BD; el ID token de Google se simula)
 - `uvicorn app.main:app --reload` — API en :8000
 - `alembic upgrade head` — migra la base configurada en `DATABASE_URL`
 - `python -m scripts.anchor_demo` — ancla y verifica de verdad en Testnet (necesita `STELLAR_SECRET_KEY`; crea una transacción real)
+- `python -m scripts.reintentar_anclajes` — una pasada del job de reintento del ancla (HU-25); el cron de Render lo ejecuta cada 10 min
 - `python -m scripts.migrar_sqlite_a_neon` — copia lotes del SQLite local a Neon y revalida los hashes
 - `python -m scripts.stellar_account create|show`
 - Requiere Python ≥3.10 (PEP 604 `X | None`); el Dockerfile usa 3.11.
@@ -47,8 +48,11 @@ Modelos (`app/models/lote.py`): `Lote` (codigo único `HUE-YYYY-NNN`,
 fecha_cosecha, fecha_postura, linea_productiva, cantidad, unidad, finca,
 municipio, `fotos` JSON con URLs de R2, `evidencias` JSON `[{nombre,tamano}]`,
 hash_sha256, stellar_tx_hash, stellar_ledger, `usuario_id` FK **nullable**
-(fuera del hash), created_at) y `Evento`
-(tipo/fecha/descripcion, clave foránea a lote con `ON DELETE CASCADE`).
+(fuera del hash), `anclaje_estado` (`pendiente|anclado|fallido|
+fallido_definitivo`), `anclaje_error`, `intentos_anclaje`, `ultimo_intento_at`,
+created_at) y `Evento` (tipo/fecha/descripcion, `hash_evento` y
+`hash_evento_anterior` de la cadena de custodia, clave foránea a lote con
+`ON DELETE CASCADE`).
 
 Modelo `Usuario` (`app/models/usuario.py`, HU-06/HU-07): `google_sub` único,
 email, nombre, foto_url y los 5 datos del primer ingreso (cedula, telefono,
@@ -56,11 +60,18 @@ finca, municipio); la propiedad `perfil_completo` marca si ya se diligenciaron.
 Migración `0002_usuarios` (usa `batch_alter_table`: SQLite no admite ALTER de
 constraints).
 
-`lifespan` ejecuta `Base.metadata.create_all` y luego
-`asegurar_columnas_sqlite()` (agrega a un SQLite ya existente las columnas que
-`create_all` no añade a tablas viejas, p. ej. `lotes.usuario_id`); en Render las
-tablas las define Alembic (`alembic upgrade head` en el CMD del Dockerfile) antes
-de arrancar, así que `create_all` queda sin efecto.
+Migraciones de las entregas 6–8: `0003_anclaje` (estado del ancla; marca
+`anclado` los lotes que ya tenían `stellar_tx_hash`) y `0004_cadena_eventos`
+(columnas de la cadena + backfill en orden de `id`). Ambas usan
+`batch_alter_table` y su `downgrade` está probado.
+
+`lifespan` ejecuta `Base.metadata.create_all`, luego `asegurar_columnas_sqlite()`
+(agrega a un SQLite ya existente las columnas que `create_all` no añade a tablas
+viejas, p. ej. `lotes.usuario_id`, `lotes.anclaje_estado` o
+`eventos.hash_evento`) y `asegurar_cadenas_eventos()` (backfill de la cadena en
+el SQLite local, equivalente a `0004`); en Render las tablas las define Alembic
+(`alembic upgrade head` en el CMD del Dockerfile) antes de arrancar, así que
+`create_all` queda sin efecto.
 
 ## API (`app/api/`)
 
@@ -70,24 +81,33 @@ de arrancar, así que `create_all` queda sin efecto.
 | `POST` | `/api/auth/google` | ID token de Google | HU-06 |
 | `GET` | `/api/auth/me` | Bearer JWT | HU-07 |
 | `PUT` | `/api/auth/me` | Bearer JWT | HU-07 |
-| `POST` | `/api/lotes` | Bearer JWT | HU-01 · HU-08 |
-| `GET` | `/api/lotes` | — | HU-05 |
-| `GET` | `/api/lotes/mios` | Bearer JWT | HU-08 |
+| `POST` | `/api/lotes` | Bearer JWT | HU-01 · HU-08 · HU-24 |
+| `GET` | `/api/lotes` | — | HU-05 · HU-30 |
+| `GET` | `/api/lotes/mios` | Bearer JWT | HU-08 · HU-30 |
 | `GET` | `/api/lotes/{codigo}` | — | HU-02 |
 | `GET` | `/api/lotes/{codigo}/eventos` | — | HU-05 |
-| `POST` | `/api/lotes/{codigo}/eventos` | `X-API-Key` | HU-05 |
-| `POST` | `/api/lotes/{codigo}/anclar` | `X-API-Key` | reintento de ancla |
-| `GET` | `/api/verify/{codigo}` | — | HU-03 |
+| `POST` | `/api/lotes/{codigo}/eventos` | Bearer JWT (dueño) | HU-05 · HU-27 |
+| `POST` | `/api/lotes/{codigo}/eventos/interno` | `X-API-Key` | HU-27 (solo lotes sin dueño) |
+| `POST` | `/api/lotes/{codigo}/anclar` | Bearer JWT (dueño) | HU-25 |
+| `GET` | `/api/verify/{codigo}` | — | HU-03 · HU-28 · HU-29 |
 | `POST` | `/api/verify` | `X-API-Key` | auditoría de una tx suelta |
 
 Dos mecanismos (`app/api/deps.py`): `require_productor` valida el **JWT** que
 emite `POST /api/auth/google` (flujo Google Identity Services + `google-auth`) y
-es obligatorio para **crear lotes** y ver `/api/lotes/mios`; `require_api_key`
-queda solo para las escrituras internas sin usuario detrás (eventos, anclaje,
-`POST /api/verify`). La `X-API-Key` es **pública** (va en el bundle JS), por eso
-ya NO abre el registro de lotes. Las lecturas quedan abiertas para que el QR
-funcione sin credenciales; si `API_KEY` está vacía, esos endpoints internos
-quedan abiertos (desarrollo local).
+es obligatorio para **crear lotes**, ver `/api/lotes/mios`, **escribir eventos**
+y **reintentar el ancla** del propio lote (403 si es ajeno). `require_api_key`
+queda solo para las escrituras internas sin usuario detrás (eventos de lotes
+heredados sin dueño y `POST /api/verify`). La `X-API-Key` es **pública** (va en
+el bundle JS), por eso ya NO abre el registro de lotes ni los eventos de un lote
+con dueño. Las lecturas quedan abiertas para que el QR funcione sin
+credenciales; si `API_KEY` está vacía, esos endpoints internos quedan abiertos
+(desarrollo local).
+
+`GET /api/lotes` y `/api/lotes/mios` aceptan `limit` (1..50, por defecto 50) y
+`offset`, y publican el total en `X-Total-Count` (HU-30; hay que exponerla en
+CORS, ya está en `expose_headers`). `GET /api/verify/{codigo}` cachea solo la
+respuesta de Horizon por `codigo` (`app/services/verify_cache.py`, TTL
+`VERIFY_CACHE_TTL`) mientras el hash y la cadena se recalculan siempre (HU-29).
 
 El QR **no** tiene endpoint propio: la etiqueta se genera en el navegador con
 `qrcode.react` en `/lote/[id]/etiqueta` (HU-04).
@@ -99,6 +119,14 @@ SHA-256. El payload canónico son **exactamente 8 campos** (`CAMPOS_LOTE`):
 `codigo`, `fecha_cosecha`, `linea_productiva`, `cantidad`, `unidad`, `finca`,
 `municipio`, `evidencias`. `fecha_postura`, `fotos` (URLs de R2), hashes y
 transacción quedan FUERA a propósito.
+
+La **cadena de custodia** (HU-28) usa otro hash, `hash_evento`: SHA-256 de
+`{anterior, tipo, fecha, descripcion}`. El primer evento encadena con
+`Lote.hash_sha256`; cada uno con el `hash_evento` del anterior. `verificar_cadena`
+devuelve `(valida, hash_final, indice_alterado)` y un evento con
+`hash_evento = NULL` invalida la cadena. `hash_evento` del backend y su gemelo
+`hashEvento` de `frontend/lib/hash.ts` también deben coincidir; cambiar un lado
+obliga a recalcular el otro.
 
 `tests/test_sha256.py` fija vectores calculados con el código real del navegador;
 si ese test falla, la verificación HU-03 se rompe en producción. **Cambiar un
@@ -115,10 +143,15 @@ reintenta 3 veces ante `tx_too_late`/`tx_bad_seq`. `verify_anchor` decodifica el
 memo (Horizon lo devuelve en base64) y lo compara; captura `NotFoundError` y
 `BadRequestError` como `StellarError`, nunca como 500.
 
-El ancla **no bloquea la existencia del registro**: si Horizon falla, el lote
-queda guardado con `stellar_tx_hash = None` y se reintenta con
-`POST /api/lotes/{codigo}/anclar`. Ten en cuenta que la llamada a Horizon sí
-sincroniza dentro del handler de `POST /api/lotes`.
+El ancla **no bloquea la existencia del registro ni la respuesta**: `POST
+/api/lotes` responde 201 y encola `anclar_por_id` con `BackgroundTasks`; el lote
+nace con `anclaje_estado = "pendiente"`. Si Horizon falla queda `fallido` (con
+`anclaje_error`) y el cron `agrotrace-reintentar-anclajes`
+(`python -m scripts.reintentar_anclajes`, cada 10 min) reintenta hasta
+`ANCLAJE_REINTENTOS_MAX`, tras lo cual pasa a `fallido_definitivo`. El productor
+también puede forzarlo con `POST /api/lotes/{codigo}/anclar` (solo el dueño).
+`anclar_lote` es idempotente: un lote con `stellar_tx_hash` no genera otra
+transacción.
 
 ## Frontend
 
@@ -140,6 +173,16 @@ localStorage). Las lecturas silencian el fallo pero lo dejan marcado con
 `modoDemoActivo()`, y las pantallas lo anuncian con `components/AvisoModoDemo`:
 sin ese aviso, un backend caído se veía como datos reales. Las **escrituras NO**
 tienen fallback demo: el error se muestra y no se crea ningún lote fantasma.
+Excepción deliberada: con la sesión sintética `"demo"` los eventos se guardan en
+el almacén local (nunca viajan al backend).
+
+Los listados (`/`, `/productor`, `/productor/productos`) usan
+`listarLotesPaginado`/`listarMisLotesPaginado` y muestran "Cargar más" con el
+`X-Total-Count` del backend (HU-30). `components/EstadoAnclaje.tsx` pinta el
+estado del ancla (`EstadoAnclajeBadge`, `AvisoAnclaje`) en "Mis lotes", el
+catálogo, la ficha y la etiqueta, con reintento manual desde "Mis lotes"
+(HU-24/HU-25). El modo demo siembra los eventos ya encadenados con
+`hashEvento`, así la verificación local también detecta alteraciones.
 
 Un `404` del backend se trata como "el lote no existe" y NO busca en el
 almacén local, para que un QR falso no parezca auténtico.
@@ -153,6 +196,13 @@ almacén local, para que un QR falso no parezca auténtico.
 vacío → el login responde 503), y `DATABASE_URL` **vacío** para que el desarrollo
 local use SQLite. `backend/.env.neon` guarda la URL de producción (también
 gitignored); ver la sección de base de datos.
+
+Opcionales de las entregas 6–8 (todas con valor por defecto razonable):
+`ANCLAJE_REINTENTOS_MAX` (5), `ANCLAJE_LOTE_POR_PASADA` (20), `VERIFY_CACHE_TTL`
+(300 s; 0 desactiva la caché), `MAX_BODY_BYTES` (8 MB), `RATE_LIMIT_ENABLED`
+(true), `RATE_LIMIT_READ` (60/min), `RATE_LIMIT_WRITE` (10/min),
+`RATE_LIMIT_LOGIN` (5/min) y `RATE_LIMIT_WINDOW` (60 s). Los tests fijan
+`RATE_LIMIT_ENABLED=false`.
 
 `frontend/.env.local` (plantilla `frontend/.env.example`): `NEXT_PUBLIC_API_URL`,
 `NEXT_PUBLIC_API_KEY`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
@@ -194,11 +244,15 @@ navegador: `NEXT_PUBLIC_API_KEY` es **pública**, no un secreto.
   `docs/semana2/KanbanBacklog.md`.
 - Producto piloto: huevos de Finca Guarumo, Cáceres (Antioquia). Código de
   lote `HUE-YYYY-NNN`, secuencial por año.
-- Las 23 historias viven en `docs/backlog/` — `IssuesListos.md` (HU-01..HU-05,
+- Las 31 historias viven en `docs/backlog/` — `IssuesListos.md` (HU-01..HU-05,
   español), `BacklogAuthGoogle.md` (HU-06..HU-08),
   `BacklogInfraProduccion.md` (HU-09..HU-13), `BacklogEstabilidadBackend.md`
-  (HU-14..HU-15) y `BacklogRedisenoVisual.md` (HU-16..HU-23), las cuatro
-  últimas trilingües — y en GitHub Issues #1..#23. El tablero es el
+  (HU-14..HU-15), `BacklogRedisenoVisual.md` (HU-16..HU-23),
+  `BacklogFiabilidadAnclaje.md` (HU-24..HU-26),
+  `BacklogIntegridadCustodia.md` (HU-27..HU-28) y
+  `BacklogLecturaPublica.md` (HU-29..HU-31), las siete últimas trilingües — y
+  en GitHub Issues #1..#31. El tablero es el
   [proyecto #14](https://github.com/users/alucart2005/projects/14), con
-  roadmap de 5 entregas (milestones cerrados) y `Priority`/`Size`/fechas
-  reales por historia.
+  roadmap de 8 entregas: las ocho implementadas (HU-01..HU-31; las entregas
+  6–8 quedaron cerradas el 2026-11-18) y `Priority`/`Size`/fechas reales por
+  historia.
