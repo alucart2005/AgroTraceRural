@@ -4,11 +4,21 @@ export type EventoTipo =
   | "empaque"
   | "despacho";
 
+/** Estado del ancla on-chain del lote (HU-24/HU-25). */
+export type EstadoAnclaje =
+  | "pendiente"
+  | "anclado"
+  | "fallido"
+  | "fallido_definitivo";
+
 export interface Evento {
   id: string;
   tipo: EventoTipo;
   fecha: string;
   descripcion: string;
+  /** Eslabón de la cadena de custodia (HU-28). */
+  hash_evento?: string | null;
+  hash_evento_anterior?: string | null;
 }
 
 export interface Evidencia {
@@ -32,6 +42,8 @@ export interface Lote {
   hash_sha256: string;
   stellar_tx_hash: string | null;
   stellar_ledger: number | null;
+  /** HU-24/HU-25: el lote existe aunque el ancla siga en curso. */
+  anclaje_estado?: EstadoAnclaje;
   eventos: Evento[];
   created_at: string;
   demo?: boolean;
@@ -46,6 +58,13 @@ export interface Verificacion {
   demo: boolean;
   /** Motivo de falla de infraestructura (Horizon caído, lote sin anclar...). */
   error?: string | null;
+  /** HU-28: estado de la cadena de eventos encadenados. */
+  cadena_valida?: boolean | null;
+  eventos_verificados?: number;
+  hash_cadena?: string | null;
+  indice_alterado?: number | null;
+  /** HU-29: origen del dato on-chain (caché local o consulta a Horizon). */
+  cache?: { hit: boolean; edad: number } | null;
 }
 
 export const EVENTO_LABELS: Record<EventoTipo, string> = {

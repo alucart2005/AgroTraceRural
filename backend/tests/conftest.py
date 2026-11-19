@@ -9,6 +9,9 @@ os.environ.setdefault("DATABASE_URL", "sqlite://")
 # Secreto de los JWT de sesión: sin él el login respondería 503 en las pruebas.
 # ≥32 bytes: PyJWT advierte si la clave HS256 es más corta (RFC 7518).
 os.environ.setdefault("AUTH_SECRET", "agrotrace-secreto-de-prueba-0123456789abcdef")
+# Los límites de abuso (HU-31) se prueban aparte: en la suite completa solo
+# estorbarían (decenas de peticiones desde la misma IP de test).
+os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 
 import base64  # noqa: E402
 
@@ -21,7 +24,9 @@ from sqlalchemy.pool import StaticPool  # noqa: E402
 from app.api.deps import require_productor  # noqa: E402
 from app.db import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402
+from app.models.lote import Lote  # noqa: E402
 from app.models.usuario import Usuario  # noqa: E402
+from app.services import verify_cache  # noqa: E402
 
 FOTO_DATA_URL = "data:image/png;base64," + base64.b64encode(b"png-de-prueba").decode()
 
@@ -74,6 +79,14 @@ def subidas() -> list:
     return []
 
 
+@pytest.fixture(autouse=True)
+def _cache_limpia():
+    """La caché de verificación es de proceso: no debe filtrar entre pruebas."""
+    verify_cache.limpiar()
+    yield
+    verify_cache.limpiar()
+
+
 @pytest.fixture()
 def client(db_session, subidas, usuario_prueba, monkeypatch):
     def _override_db():
@@ -112,6 +125,19 @@ def client(db_session, subidas, usuario_prueba, monkeypatch):
         },
     )
 
+    # HU-24: la tarea de fondo abre su propia sesión (SessionLocal) en
+    # producción; en pruebas la BD es un SQLite en memoria exclusivo de la
+    # sesión del test, así que la tarea se ejecuta contra ``db_session``.
+    from app.services import lotes as servicio_lotes
+
+    monkeypatch.setattr(
+        servicio_lotes,
+        "anclar_por_id",
+        lambda lote_id: servicio_lotes.anclar_lote(
+            db_session, db_session.get(Lote, lote_id)
+        ),
+    )
+
     with TestClient(app) as test_client:
         yield test_client
 
@@ -134,6 +160,22 @@ def sesion(client, monkeypatch):
     res = client.post("/api/auth/google", json={"id_token": "id-token-de-prueba-123456"})
     assert res.status_code == 200, res.text
     return {"Authorization": f"Bearer {res.json()['token']}"}
+
+
+@pytest.fixture()
+def sesion_otro(db_session):
+    """JWT de un segundo productor, para probar el 403 de HU-27."""
+    from app.services import auth as servicio_auth
+
+    otro = Usuario(
+        id="otro-productor",
+        google_sub="google-otro",
+        email="otro@guarumo.co",
+        nombre="Otro Productor",
+    )
+    db_session.add(otro)
+    db_session.commit()
+    return {"Authorization": f"Bearer {servicio_auth.crear_jwt(otro.id)}"}
 
 
 def payload_lote(**extra) -> dict:

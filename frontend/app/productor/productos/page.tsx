@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Lote } from "@/lib/types";
-import { listarLotes, modoDemoActivo } from "@/lib/api";
+import { listarLotesPaginado, modoDemoActivo } from "@/lib/api";
 import AvisoModoDemo from "@/components/AvisoModoDemo";
 import EncabezadoPagina from "@/components/EncabezadoPagina";
+import { EstadoAnclajeBadge } from "@/components/EstadoAnclaje";
 import ProtegerProductor from "@/components/ProtegerProductor";
+
+/** Tamaño de página del catálogo (HU-30; máximo del backend: 50). */
+const PAGINA = 20;
 
 export default function ProductosPage() {
   return (
@@ -31,17 +35,40 @@ interface LineaProducto {
  */
 function CatalogoProductos() {
   const [lotes, setLotes] = useState<Lote[] | null>(null);
+  const [total, setTotal] = useState(0);
   const [demo, setDemo] = useState(false);
   const [filtro, setFiltro] = useState("");
+  const [cargandoMas, setCargandoMas] = useState(false);
+  const [aviso, setAviso] = useState("");
 
   useEffect(() => {
-    listarLotes()
-      .then((l) => {
+    listarLotesPaginado(PAGINA, 0)
+      .then(({ lotes: primera, total: n }) => {
         setDemo(modoDemoActivo());
-        setLotes(l);
+        setLotes(primera);
+        setTotal(n);
       })
       .catch(() => setLotes([]));
   }, []);
+
+  const cargarMas = useCallback(async () => {
+    if (!lotes) return;
+    setCargandoMas(true);
+    setAviso("");
+    try {
+      const { lotes: siguiente, total: n } = await listarLotesPaginado(
+        PAGINA,
+        lotes.length
+      );
+      setDemo(modoDemoActivo());
+      setLotes([...lotes, ...siguiente]);
+      setTotal(n);
+    } catch {
+      setAviso("No se pudo cargar más lotes. Intenta de nuevo.");
+    } finally {
+      setCargandoMas(false);
+    }
+  }, [lotes]);
 
   const lineas = useMemo<LineaProducto[]>(() => {
     if (!lotes) return [];
@@ -76,9 +103,11 @@ function CatalogoProductos() {
       : true
   );
 
-  const totalLotes = lotes?.length ?? 0;
+  const totalLotes = total;
   const totalEvidencias =
     lotes?.reduce((acc, l) => acc + l.fotos.length, 0) ?? 0;
+  const cargados = lotes?.length ?? 0;
+  const hayMas = lotes !== null && cargados < total;
 
   return (
     <div className="space-y-6">
@@ -95,6 +124,15 @@ function CatalogoProductos() {
 
       {(demo || lotes?.some((l) => l.demo)) && (
         <AvisoModoDemo detalle="el catálogo se armó con los datos de ejemplo" />
+      )}
+
+      {aviso && (
+        <p
+          role="alert"
+          className="rounded-xl border border-red-400/50 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
+          {aviso}
+        </p>
       )}
 
       {lotes === null ? (
@@ -123,6 +161,11 @@ function CatalogoProductos() {
               <p className="mt-1 text-3xl font-black text-emerald-900">
                 {totalEvidencias}
               </p>
+              {hayMas && (
+                <p className="text-[11px] text-emerald-900/50">
+                  de los {cargados} lotes cargados
+                </p>
+              )}
             </div>
           </div>
 
@@ -210,6 +253,9 @@ function CatalogoProductos() {
                           <p className="text-xs text-emerald-900/60">
                             {lote.cantidad} {lote.unidad} · cosecha {lote.fecha_cosecha}
                           </p>
+                          <div className="mt-1">
+                            <EstadoAnclajeBadge lote={lote} />
+                          </div>
                         </div>
                         <div className="flex gap-2">
                           <Link
@@ -232,6 +278,23 @@ function CatalogoProductos() {
               ))}
             </ul>
           )}
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-emerald-900/60">
+              {cargados} de {total} lote{total === 1 ? "" : "s"} cargado
+              {cargados === 1 ? "" : "s"}
+            </p>
+            {hayMas && (
+              <button
+                type="button"
+                onClick={cargarMas}
+                disabled={cargandoMas}
+                className="btn-secondary text-sm disabled:opacity-60"
+              >
+                {cargandoMas ? "Cargando…" : "Cargar más"}
+              </button>
+            )}
+          </div>
         </>
       )}
     </div>

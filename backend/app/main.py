@@ -5,7 +5,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import auth, health, lotes, verify
 from app.core.config import settings
-from app.db import Base, asegurar_columnas_sqlite, engine
+from app.core.limites import LimiteCuerpoMiddleware, RateLimitMiddleware
+from app.db import (
+    Base,
+    asegurar_cadenas_eventos,
+    asegurar_columnas_sqlite,
+    engine,
+)
 from app.models import Evento, Lote, Usuario  # noqa: F401 — registra las tablas
 
 ORIGENES_PUBLICOS = (
@@ -21,6 +27,7 @@ async def lifespan(_: FastAPI):
     # define Alembic (``alembic upgrade head``) antes de arrancar.
     Base.metadata.create_all(bind=engine)
     asegurar_columnas_sqlite()
+    asegurar_cadenas_eventos()
     yield
 
 
@@ -28,11 +35,19 @@ app = FastAPI(title="AgroTrace Rural API", lifespan=lifespan)
 
 allow_origins = [o for o in dict.fromkeys([settings.frontend_url, *ORIGENES_PUBLICOS]) if o]
 
+# Middlewares: el último añadido queda más afuera. CORS va al final para que
+# también añada cabeceras a los 413/429 de los límites.
+app.add_middleware(LimiteCuerpoMiddleware)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
     allow_methods=["*"],
     allow_headers=["*"],
+    # HU-30/HU-31: el navegador solo puede leer cabeceras "simples" salvo que
+    # se expongan aquí; sin esto la paginación y el reintento se ocultaban
+    # tras un CORS opaco.
+    expose_headers=["X-Total-Count", "Retry-After"],
 )
 
 app.include_router(health.router)

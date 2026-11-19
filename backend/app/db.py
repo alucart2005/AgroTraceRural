@@ -61,3 +61,80 @@ def asegurar_columnas_sqlite() -> None:
         columnas = {c["name"] for c in inspect(conn).get_columns("lotes")}
         if "usuario_id" not in columnas:
             conn.execute(text("ALTER TABLE lotes ADD COLUMN usuario_id VARCHAR(36)"))
+        # Entregas 6–8 (HU-24, HU-28): columnas nuevas del anclaje y la cadena.
+        nuevas_lotes = {
+            "anclaje_estado": "VARCHAR(20) NOT NULL DEFAULT 'pendiente'",
+            "anclaje_error": "TEXT",
+            "intentos_anclaje": "INTEGER NOT NULL DEFAULT 0",
+            "ultimo_intento_at": "DATETIME",
+        }
+        for nombre, ddl in nuevas_lotes.items():
+            if nombre not in columnas:
+                conn.execute(text(f"ALTER TABLE lotes ADD COLUMN {nombre} {ddl}"))
+
+        columnas_eventos = {
+            c["name"] for c in inspect(conn).get_columns("eventos")
+        }
+        nuevas_eventos = {
+            "hash_evento": "VARCHAR(64)",
+            "hash_evento_anterior": "VARCHAR(64)",
+        }
+        for nombre, ddl in nuevas_eventos.items():
+            if nombre not in columnas_eventos:
+                conn.execute(
+                    text(f"ALTER TABLE eventos ADD COLUMN {nombre} {ddl}")
+                )
+
+
+def asegurar_cadenas_eventos() -> None:
+    """Rellena la cadena de custodia en el SQLite de desarrollo (HU-28).
+
+    En Postgres lo hace la migración ``0004_cadena_eventos``. En local no se
+    corre Alembic, así que los eventos anteriores a esta entrega tendrían
+    ``hash_evento = NULL`` y la verificación los marcaría como alterados.
+    Idempotente: solo toca filas sin hash.
+    """
+    from sqlalchemy import text
+
+    if engine.url.get_backend_name() != "sqlite":
+        return
+
+    import hashlib
+    import json
+
+    def hash_eslabon(anterior: str, tipo: str, fecha: str, descripcion: str) -> str:
+        payload = {
+            "anterior": anterior,
+            "tipo": tipo,
+            "fecha": fecha,
+            "descripcion": descripcion,
+        }
+        canonico = json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        )
+        return hashlib.sha256(canonico.encode("utf-8")).hexdigest()
+
+    with engine.begin() as conn:
+        lotes = conn.execute(text("SELECT id, hash_sha256 FROM lotes")).fetchall()
+        for lote_id, hash_lote in lotes:
+            eventos = conn.execute(
+                text(
+                    "SELECT id, tipo, fecha, descripcion, hash_evento "
+                    "FROM eventos WHERE lote_id = :l ORDER BY id"
+                ),
+                {"l": lote_id},
+            ).fetchall()
+            anterior = hash_lote
+            for ev_id, tipo, fecha, descripcion, guardado in eventos:
+                if guardado:
+                    anterior = guardado
+                    continue
+                nuevo = hash_eslabon(anterior, tipo, fecha, descripcion)
+                conn.execute(
+                    text(
+                        "UPDATE eventos SET hash_evento = :h, "
+                        "hash_evento_anterior = :a WHERE id = :i"
+                    ),
+                    {"h": nuevo, "a": anterior, "i": ev_id},
+                )
+                anterior = nuevo

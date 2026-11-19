@@ -38,6 +38,18 @@ class Lote(Base):
     hash_sha256: Mapped[str] = mapped_column(String(64))
     stellar_tx_hash: Mapped[str | None] = mapped_column(String(64))
     stellar_ledger: Mapped[int | None] = mapped_column(Integer)
+    # Estado del ancla (HU-24/HU-25): ``pendiente|anclado|fallido|fallido_definitivo``.
+    # El lote existe desde el primer commit; el ancla viaja en segundo plano.
+    anclaje_estado: Mapped[str] = mapped_column(
+        String(20), default="pendiente", server_default="pendiente", index=True
+    )
+    anclaje_error: Mapped[str | None] = mapped_column(Text)
+    intentos_anclaje: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0"
+    )
+    ultimo_intento_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
     # Productor que lo registró (HU-08). Queda FUERA del hash canónico y es
     # nullable: los lotes previos a la autenticación no tienen dueño.
     usuario_id: Mapped[str | None] = mapped_column(
@@ -77,5 +89,9 @@ class Evento(Base):
     tipo: Mapped[str] = mapped_column(String(20))
     fecha: Mapped[str] = mapped_column(String(40))
     descripcion: Mapped[str] = mapped_column(Text)
+    # Cadena de custodia (HU-28): cada evento encadena el hash del anterior.
+    # El primer eslabón encadena con ``Lote.hash_sha256``.
+    hash_evento: Mapped[str | None] = mapped_column(String(64))
+    hash_evento_anterior: Mapped[str | None] = mapped_column(String(64))
 
     lote: Mapped[Lote] = relationship(back_populates="eventos")

@@ -55,3 +55,50 @@ def payload_lote(datos_lote: dict) -> dict:
 def hash_lote(datos_lote: dict) -> str:
     """SHA-256 de la huella del lote. En blockchain viaja SOLO este hash."""
     return hash_canonico(payload_lote(datos_lote))
+
+
+# --- Cadena de custodia (HU-28) ---------------------------------------------
+
+CAMPOS_EVENTO = ("anterior", "tipo", "fecha", "descripcion")
+
+
+def hash_evento(
+    hash_anterior: str, tipo: str, fecha: str, descripcion: str
+) -> str:
+    """SHA-256 de un eslabón de la cadena de custodia.
+
+    El payload es deliberadamente corto y estable: el hash del eslabón previo
+    (o el del lote en el primero) + los tres campos del evento. Cambiar una
+    coma, la fecha o la descripción rompe la cadena y la verificación lo nota.
+    """
+    return hash_canonico(
+        {
+            "anterior": hash_anterior,
+            "tipo": tipo,
+            "fecha": fecha,
+            "descripcion": descripcion,
+        }
+    )
+
+
+def verificar_cadena(eventos, hash_inicial: str) -> tuple[bool, str, int | None]:
+    """Recalcula la cadena de eventos desde el hash del lote.
+
+    Devuelve ``(valida, hash_final, indice_alterado)``. Un evento sin hash
+    (dato anterior a HU-28 que no se pudo backfillear) invalida la cadena: es
+    mejor decir "no verificable" que afirmar integridad.
+    """
+    anterior = hash_inicial
+    for indice, evento in enumerate(eventos):
+        if (
+            not evento.hash_evento
+            or evento.hash_evento_anterior != anterior
+        ):
+            return False, anterior, indice
+        esperado = hash_evento(
+            anterior, evento.tipo, evento.fecha, evento.descripcion
+        )
+        if esperado != evento.hash_evento:
+            return False, anterior, indice
+        anterior = evento.hash_evento
+    return True, anterior, None

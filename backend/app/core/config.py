@@ -36,6 +36,28 @@ class Settings(BaseSettings):
     # Generar con `openssl rand -hex 32`; vacío → el login responde 503.
     auth_secret: str = ""
 
+    # --- Anclaje (HU-24, HU-25) -------------------------------------------
+    # Reintentos máximos por lote antes de marcarlo ``fallido_definitivo``.
+    anclaje_reintentos_max: int = 5
+    # Cuántos lotes procesa cada pasada del job de reintento.
+    anclaje_lote_por_pasada: int = 20
+
+    # --- Verificación pública (HU-29) -------------------------------------
+    # Segundos que se reutiliza el resultado de Horizon. 0 desactiva la caché.
+    verify_cache_ttl: int = 300
+
+    # --- Límites de abuso (HU-31) -----------------------------------------
+    # Tope del cuerpo de una petición (las fotos llegan en base64 dentro del
+    # JSON: 6 × 10 MB podrían bufferizar ~60 MB sin este límite).
+    max_body_bytes: int = 8_000_000
+    # False en tests; en producción se activa por variable de entorno.
+    rate_limit_enabled: bool = True
+    # Peticiones permitidas por ventana e IP.
+    rate_limit_read: int = 60
+    rate_limit_write: int = 10
+    rate_limit_login: int = 5
+    rate_limit_window: int = 60
+
     @field_validator("database_url", mode="before")
     @classmethod
     def _normalizar_postgres(cls, valor: str) -> str:

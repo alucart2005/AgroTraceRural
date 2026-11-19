@@ -1,9 +1,10 @@
 import type { Evento, Lote } from "./types";
-import { hashLote, payloadDeLote, sha256Hex } from "./hash";
+import { hashEvento, hashLote, payloadDeLote, sha256Hex } from "./hash";
 
-// v3: la semilla pasa a ser el lote real HUE-2026-008 (antes HUE-2027-001);
-// subir la versión fuerza el re-sembrado en navegadores con datos viejos.
-const KEY = "agrotrace.demo.lotes.v3";
+// v4: los eventos de la cadena de custodia llevan hash (HU-28). Subir la
+// versión fuerza el re-sembrado: una semilla vieja sin hashes se vería como
+// "alterada" en la verificación, que es justo lo que la cadena debe evitar.
+const KEY = "agrotrace.demo.lotes.v4";
 
 function readStore(): Lote[] {
   if (typeof window === "undefined") return [];
@@ -47,6 +48,29 @@ export function nuevoCodigo(fechaISO: string, existentes: string[]): string {
   return `HUE-${anio}-${String(max + 1).padStart(3, "0")}`;
 }
 
+async function encadenar(
+  hashInicial: string,
+  eventos: Omit<Evento, "hash_evento" | "hash_evento_anterior">[]
+): Promise<Evento[]> {
+  let anterior = hashInicial;
+  const encadenados: Evento[] = [];
+  for (const evento of eventos) {
+    const h = await hashEvento(
+      anterior,
+      evento.tipo,
+      evento.fecha,
+      evento.descripcion
+    );
+    encadenados.push({
+      ...evento,
+      hash_evento_anterior: anterior,
+      hash_evento: h,
+    });
+    anterior = h;
+  }
+  return encadenados;
+}
+
 async function makeSeed(): Promise<Lote> {
   const base = {
     codigo: "HUE-2026-008",
@@ -69,7 +93,7 @@ async function makeSeed(): Promise<Lote> {
   // mismos 8 campos canónicos, hashLote reproduce el hash anclado en Stellar
   // (paridad backend/frontend probada en tests/test_sha256.py).
   const hash = await hashLote(payloadDeLote(base));
-  const eventos: Evento[] = [
+  const baseEventos: Omit<Evento, "hash_evento" | "hash_evento_anterior">[] = [
     {
       id: "ev-1",
       tipo: "cosecha",
@@ -95,6 +119,7 @@ async function makeSeed(): Promise<Lote> {
       descripcion: "Salida hacia el punto de venta en Cáceres.",
     },
   ];
+  const eventos = await encadenar(hash, baseEventos);
   return {
     id: "demo-0001",
     codigo: base.codigo,
@@ -117,6 +142,7 @@ async function makeSeed(): Promise<Lote> {
     // Ancla real del lote en Stellar Testnet (viewable en cualquier explorador).
     stellar_tx_hash: "0b3a48c0934f2d5e512ddae3a2dc79ec6051bf3599302a0c286dcffa9c118ca9",
     stellar_ledger: 5377565,
+    anclaje_estado: "anclado",
     eventos,
     created_at: "2026-10-25T06:56:49.864498Z",
     demo: true,
@@ -161,6 +187,14 @@ export async function crearLote(input: {
   const hash = await hashLote(payloadDeLote(base));
   const tx = await sha256Hex("demo-anchor:" + hash);
   const now = new Date().toISOString();
+  const eventos = await encadenar(hash, [
+    {
+      id: "ev-1",
+      tipo: "cosecha",
+      fecha: `${input.fecha_cosecha}T07:00:00-05:00`,
+      descripcion: `Recolección de ${input.cantidad} ${input.unidad} de ${input.linea_productiva}.`,
+    },
+  ]);
   const lote: Lote = {
     id: `demo-${Date.now()}`,
     ...base,
@@ -168,14 +202,8 @@ export async function crearLote(input: {
     hash_sha256: hash,
     stellar_tx_hash: tx,
     stellar_ledger: 5377565 + lotes.length,
-    eventos: [
-      {
-        id: "ev-1",
-        tipo: "cosecha",
-        fecha: `${input.fecha_cosecha}T07:00:00-05:00`,
-        descripcion: `Recolección de ${input.cantidad} ${input.unidad} de ${input.linea_productiva}.`,
-      },
-    ],
+    anclaje_estado: "anclado",
+    eventos,
     created_at: now,
     demo: true,
   };
@@ -190,11 +218,25 @@ export async function guardarEvento(
   const lotes = await ensureSeed();
   const idx = lotes.findIndex((l) => l.codigo === codigo);
   if (idx < 0) return null;
+  const actual = lotes[idx];
+  const ultimo = actual.eventos?.[actual.eventos.length - 1];
+  const hashAnterior = ultimo?.hash_evento ?? actual.hash_sha256;
+  const hash = await hashEvento(
+    hashAnterior,
+    evento.tipo,
+    evento.fecha,
+    evento.descripcion
+  );
   const lote: Lote = {
-    ...lotes[idx],
+    ...actual,
     eventos: [
-      ...lotes[idx].eventos,
-      { id: `ev-${Date.now()}`, ...evento },
+      ...actual.eventos,
+      {
+        id: `ev-${Date.now()}`,
+        ...evento,
+        hash_evento_anterior: hashAnterior,
+        hash_evento: hash,
+      },
     ],
   };
   lotes[idx] = lote;

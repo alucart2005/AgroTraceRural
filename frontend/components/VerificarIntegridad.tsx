@@ -63,8 +63,9 @@ export default function VerificarIntegridad({
             🔒 Verificar integridad on-chain
           </h2>
           <p className="mt-1 text-sm text-emerald-900/70">
-            Recalcula el hash SHA-256 de los datos del lote y lo compara con el
-            hash registrado en <strong>Stellar Testnet</strong>.
+            Recalcula el hash SHA-256 de los datos del lote y la cadena de
+            custodia de sus eventos, y los compara con lo registrado en{" "}
+            <strong>Stellar Testnet</strong>.
           </p>
         </div>
         <button onClick={verificar} disabled={estado === "verificando"} className="btn-primary shrink-0">
@@ -102,7 +103,34 @@ export default function VerificarIntegridad({
                 )}
               </dd>
             </div>
+            {/* HU-28: el hash del lote puede coincidir y aun así haber un
+                evento inyectado o borrado; aquí se muestra que la cadena
+                completa también se recalculó. */}
+            <div>
+              <dt className="font-semibold text-emerald-900">
+                Cadena de custodia
+              </dt>
+              <dd className="font-mono text-xs">
+                {resultado.eventos_verificados ?? 0} evento
+                {(resultado.eventos_verificados ?? 0) === 1 ? "" : "s"}{" "}
+                encadenado
+                {(resultado.eventos_verificados ?? 0) === 1 ? "" : "s"} sin
+                alteraciones
+                {resultado.hash_cadena && (
+                  <span className="block break-all text-emerald-900/60">
+                    eslabón final: {trunc(resultado.hash_cadena, 16)}
+                  </span>
+                )}
+              </dd>
+            </div>
           </dl>
+          {resultado.cache?.hit && (
+            <p className="mt-2 text-xs text-emerald-800/70">
+              Resultado on-chain servido desde caché (hace{" "}
+              {resultado.cache.edad} s). El hash y la cadena se recalcularon
+              ahora mismo.
+            </p>
+          )}
           {resultado.demo && (
             <p className="mt-2 text-xs text-emerald-800/70">
               Modo demo: el ancla está simulada en el navegador. Con el backend
@@ -147,11 +175,29 @@ export default function VerificarIntegridad({
 
       {estado === "error" && (
         <div className="mt-4 rounded-xl border border-red-500/40 bg-red-50 p-4">
-          <p className="badge bg-red-600 text-white">🚨 Información alterada</p>
-          <p className="mt-2 text-sm text-red-800">
-            El hash calculado no coincide con el registrado. Los datos del lote
-            fueron modificados después del anclaje.
+          <p className="badge bg-red-600 text-white">
+            🚨 Información alterada
           </p>
+          {resultado &&
+          resultado.hash_calculado === resultado.hash_registrado &&
+          resultado.cadena_valida === false ? (
+            <p className="mt-2 text-sm text-red-800">
+              Los datos del lote siguen intactos, pero el{" "}
+              <strong>historial de custodia</strong> no encadena: el evento
+              nº{" "}
+              {resultado.indice_alterado != null
+                ? resultado.indice_alterado + 1
+                : "?"}{" "}
+              fue modificado, borrado o insertado después del registro. El hash
+              del lote no cubre los eventos, y por eso la cadena los protege
+              aparte.
+            </p>
+          ) : (
+            <p className="mt-2 text-sm text-red-800">
+              El hash calculado no coincide con el registrado. Los datos del
+              lote fueron modificados después del anclaje.
+            </p>
+          )}
           {resultado && (
             <dl className="mt-3 grid gap-2 text-sm">
               <div>
@@ -166,6 +212,20 @@ export default function VerificarIntegridad({
                   {resultado.hash_calculado}
                 </dd>
               </div>
+              {resultado.cadena_valida === false && (
+                <div>
+                  <dt className="font-semibold text-red-900">
+                    Cadena de custodia
+                  </dt>
+                  <dd className="font-mono text-xs text-red-800">
+                    rota en el evento nº{" "}
+                    {resultado.indice_alterado != null
+                      ? resultado.indice_alterado + 1
+                      : "?"}{" "}
+                    de {resultado.eventos_verificados ?? 0}
+                  </dd>
+                </div>
+              )}
             </dl>
           )}
         </div>

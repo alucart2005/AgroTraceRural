@@ -39,10 +39,18 @@ def test_crear_lote_con_fotos_y_anclaje(client, subidas):
         }
     )
 
-    # ancla on-chain simulada + evento inicial de cosecha
-    assert lote["stellar_tx_hash"] == f"tx-{lote['hash_sha256'][:12]}"
-    assert lote["stellar_ledger"] == 999
+    # HU-24: el 201 NO espera a Horizon. El lote nace "pendiente"; el ancla
+    # corre en segundo plano (el TestClient la ejecuta al cerrar la respuesta).
+    assert lote["stellar_tx_hash"] is None
+    assert lote["anclaje_estado"] == "pendiente"
     assert lote["eventos"][0]["tipo"] == "cosecha"
+    assert lote["eventos"][0]["hash_evento_anterior"] == lote["hash_sha256"]
+
+    # Una vez ejecutada la tarea de fondo, el lote queda anclado.
+    anclado = client.get(f"/api/lotes/{lote['codigo']}").json()
+    assert anclado["stellar_tx_hash"] == f"tx-{anclado['hash_sha256'][:12]}"
+    assert anclado["stellar_ledger"] == 999
+    assert anclado["anclaje_estado"] == "anclado"
     assert "demo" not in lote
 
 
@@ -131,8 +139,8 @@ def test_crear_lote_exige_sesion_y_no_acepta_api_key(sin_sesion, monkeypatch):
     assert sin_sesion.get("/api/lotes").status_code == 200
 
 
-def test_api_key_sigue_para_eventos_ancla_y_verify(sin_sesion, sesion, monkeypatch):
-    """Solo las escrituras internas sin usuario detrás conservan la X-API-Key."""
+def test_api_key_ya_no_abre_eventos_ni_ancla(sin_sesion, sesion, monkeypatch):
+    """HU-27: la X-API-Key es pública; escribir en un lote exige ser el dueño."""
     monkeypatch.setattr(settings, "api_key", "secreta-123")
     codigo = sin_sesion.post(
         "/api/lotes", json=payload_lote(), headers=sesion
@@ -143,22 +151,37 @@ def test_api_key_sigue_para_eventos_ancla_y_verify(sin_sesion, sesion, monkeypat
         "fecha": "2027-03-14T09:00:00-05:00",
         "descripcion": "10 cubetas en caja con etiqueta QR.",
     }
+    # Sin sesión → 401, aunque la clave sea válida.
     assert (
         sin_sesion.post(f"/api/lotes/{codigo}/eventos", json=evento).status_code
         == 401
     )
-    ok_evento = sin_sesion.post(
-        f"/api/lotes/{codigo}/eventos",
-        json=evento,
-        headers={"X-API-Key": "secreta-123"},
+    assert (
+        sin_sesion.post(
+            f"/api/lotes/{codigo}/eventos",
+            json=evento,
+            headers={"X-API-Key": "secreta-123"},
+        ).status_code
+        == 401
     )
-    assert ok_evento.status_code == 200
+    # Con la sesión del dueño sí se escribe.
+    assert (
+        sin_sesion.post(
+            f"/api/lotes/{codigo}/eventos", json=evento, headers=sesion
+        ).status_code
+        == 200
+    )
 
+    # El reintento de ancla también exige al dueño.
     assert sin_sesion.post(f"/api/lotes/{codigo}/anclar").status_code == 401
     assert (
         sin_sesion.post(
             f"/api/lotes/{codigo}/anclar", headers={"X-API-Key": "secreta-123"}
         ).status_code
+        == 401
+    )
+    assert (
+        sin_sesion.post(f"/api/lotes/{codigo}/anclar", headers=sesion).status_code
         == 200
     )
 

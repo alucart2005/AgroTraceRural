@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { Lote, Verificacion } from "@/lib/types";
 import { modoDemoActivo, obtenerLote, verificarLote } from "@/lib/api";
 import AvisoModoDemo from "@/components/AvisoModoDemo";
+import AvisoAnclaje from "@/components/EstadoAnclaje";
 import VerificarIntegridad from "@/components/VerificarIntegridad";
 import Timeline from "@/components/Timeline";
 import CarruselFotos from "@/components/CarruselFotos";
@@ -193,6 +194,8 @@ export default function LotePage({
       )}
 
       <BannerVerificacion estado={estado} />
+
+      <AvisoAnclaje lote={lote} />
 
       <section className="card space-y-5">
         <div>

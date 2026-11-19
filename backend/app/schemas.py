@@ -79,6 +79,9 @@ class EventoOut(BaseModel):
     tipo: str
     fecha: str
     descripcion: str
+    # Cadena de custodia (HU-28). Pueden faltar en datos previos a la migración.
+    hash_evento: str | None = None
+    hash_evento_anterior: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -103,10 +106,19 @@ class LoteOut(BaseModel):
     hash_sha256: str
     stellar_tx_hash: str | None = None
     stellar_ledger: int | None = None
+    # HU-24/HU-25: el lote existe aunque el ancla siga en curso.
+    anclaje_estado: str = "pendiente"
     eventos: list[EventoOut] = Field(default_factory=list)
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class CacheInfoOut(BaseModel):
+    """Origen del dato on-chain (HU-29): caché local o consulta a Horizon."""
+
+    hit: bool
+    edad: int = 0
 
 
 class VerificacionOut(BaseModel):
@@ -120,6 +132,13 @@ class VerificacionOut(BaseModel):
     # inaccesible o lote aún sin anclar. Si es ``None`` y ``verificado`` es
     # False, los datos fueron alterados.
     error: str | None = None
+    # Cadena de custodia (HU-28): estado de los eventos encadenados.
+    cadena_valida: bool | None = None
+    eventos_verificados: int = 0
+    hash_cadena: str | None = None
+    indice_alterado: int | None = None
+    # HU-29: si el resultado vino de la caché y cuántos segundos tenía.
+    cache: CacheInfoOut | None = None
 
 
 # --- Autenticación con Google (HU-06, HU-07) --------------------------------

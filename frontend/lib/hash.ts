@@ -57,3 +57,18 @@ export function payloadDeLote(lote: {
 export async function hashLote(payload: PayloadLote): Promise<string> {
   return sha256Hex(canonicalJson(payload));
 }
+
+/**
+ * SHA-256 de un eslabón de la cadena de custodia (HU-28).
+ *
+ * PARIDAD con ``backend/app/services/sha256.py::hash_evento``: mismo payload
+ * ``{anterior, tipo, fecha, descripcion}`` y la misma canonicalización.
+ */
+export async function hashEvento(
+  anterior: string,
+  tipo: string,
+  fecha: string,
+  descripcion: string
+): Promise<string> {
+  return sha256Hex(canonicalJson({ anterior, tipo, fecha, descripcion }));
+}

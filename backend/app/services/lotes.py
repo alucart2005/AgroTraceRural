@@ -17,15 +17,16 @@ import logging
 import os
 import re
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.lote import Evento, Lote
-from app.services import storage
-from app.services.sha256 import hash_lote
+from app.services import storage, verify_cache
+from app.services.sha256 import hash_evento, hash_lote
 from app.services.stellar import StellarError, anchor_hash
 
 log = logging.getLogger(__name__)
@@ -130,8 +131,8 @@ def crear_lote(db: Session, datos, usuario_id: str | None = None) -> Lote:
         _limpiar(claves)
         raise CodigoNoDisponible("No se pudo asignar un código de lote único")
 
-    # 3) ancla on-chain (no bloqueante para la existencia del registro)
-    anclar_lote(db, lote)
+    # 3) ancla on-chain FUERA del request (HU-24): el lote ya existe y la
+    # respuesta no espera a Horizon. El endpoint encola ``anclar_por_id``.
     return lote
 
 
@@ -178,16 +179,22 @@ def _persistir(
         fotos=fotos,
         evidencias=evidencias,
         hash_sha256=hash_hex,
+        anclaje_estado="pendiente",
         usuario_id=usuario_id,
     )
+    descripcion = (
+        f"Recolección de {datos.cantidad} {datos.unidad} "
+        f"de {datos.linea_productiva}."
+    )
+    fecha_evento = f"{datos.fecha_cosecha}T07:00:00-05:00"
+    # Primer eslabón de la cadena (HU-28): encadena con el hash del lote.
     lote.eventos.append(
         Evento(
             tipo="cosecha",
-            fecha=f"{datos.fecha_cosecha}T07:00:00-05:00",
-            descripcion=(
-                f"Recolección de {datos.cantidad} {datos.unidad} "
-                f"de {datos.linea_productiva}."
-            ),
+            fecha=fecha_evento,
+            descripcion=descripcion,
+            hash_evento_anterior=hash_hex,
+            hash_evento=hash_evento(hash_hex, "cosecha", fecha_evento, descripcion),
         )
     )
     db.add(lote)
@@ -197,16 +204,125 @@ def _persistir(
 
 
 def anclar_lote(db: Session, lote: Lote) -> bool:
-    """Ancla el hash del lote en Stellar Testnet. Idempotente; False si falla."""
+    """Ancla el hash del lote en Stellar Testnet. Idempotente; False si falla.
+
+    ``intentos_anclaje`` cuenta los intentos reales (incluido el primero), de
+    modo que el job de reintento puede rendirse tras ``anclaje_reintentos_max``
+    y marcar el lote como ``fallido_definitivo`` en vez de martillar Horizon.
+    """
     if lote.stellar_tx_hash:
+        if lote.anclaje_estado != "anclado":
+            lote.anclaje_estado = "anclado"
+            db.commit()
         return True
+    if lote.anclaje_estado == "fallido_definitivo":
+        return False
+
+    lote.intentos_anclaje = (lote.intentos_anclaje or 0) + 1
+    lote.ultimo_intento_at = datetime.now(timezone.utc)
+
     try:
         respuesta = anchor_hash(lote.codigo, lote.hash_sha256)
     except StellarError as exc:
+        lote.anclaje_estado = "fallido"
+        lote.anclaje_error = str(exc)[:1000]
+        db.commit()
         log.warning("Anclaje pendiente para %s: %s", lote.codigo, exc)
         return False
-    lote.stellar_tx_hash = respuesta.get("tx_hash")
+
+    tx_hash = respuesta.get("tx_hash")
+    if not tx_hash:
+        lote.anclaje_estado = "fallido"
+        lote.anclaje_error = "Horizon no devolvió tx_hash"
+        db.commit()
+        return False
+
+    lote.stellar_tx_hash = tx_hash
     lote.stellar_ledger = respuesta.get("ledger")
+    lote.anclaje_estado = "anclado"
+    lote.anclaje_error = None
     db.commit()
     db.refresh(lote)
+    # El resultado de Horizon cambió: la caché de verificación ya no sirve.
+    verify_cache.invalidar(lote.codigo)
     return True
+
+
+def anclar_por_id(lote_id: str) -> bool:
+    """Tarea de fondo (HU-24): abre su PROPIA sesión y ancla el lote.
+
+    El request que creó el lote ya cerró su sesión cuando corre la tarea, así
+    que reutilizarla sería un error. Devuelve False si el lote ya no existe.
+    """
+    from app.db import SessionLocal
+
+    db = SessionLocal()
+    try:
+        lote = db.get(Lote, lote_id)
+        if lote is None:
+            log.warning("Anclaje en segundo plano: lote %s no existe", lote_id)
+            return False
+        return anclar_lote(db, lote)
+    finally:
+        db.close()
+
+
+def reintentar_pendientes(db: Session, limite: int = 20) -> int:
+    """Job de reintento (HU-25): ancla pendientes/fallidos y acota los intentos.
+
+    Devuelve cuántos lotes quedaron anclados. Los que superan el máximo pasan a
+    ``fallido_definitivo`` y dejan de ocupar al job en pasadas siguientes.
+    """
+    maximo = settings.anclaje_reintentos_max
+
+    # Los que ya agotaron intentos pasan a definitivo sin volver a llamar a
+    # Horizon ni ocupar un hueco de la pasada.
+    agotados = db.scalars(
+        select(Lote)
+        .where(Lote.anclaje_estado == "fallido")
+        .where(Lote.intentos_anclaje >= maximo)
+    ).all()
+    for lote in agotados:
+        lote.anclaje_estado = "fallido_definitivo"
+    if agotados:
+        db.commit()
+
+    pendientes = db.scalars(
+        select(Lote)
+        .where(Lote.anclaje_estado.in_(("pendiente", "fallido")))
+        .where(Lote.intentos_anclaje < maximo)
+        .order_by(Lote.created_at.asc())
+        .limit(limite)
+    ).all()
+
+    anclados = 0
+    for lote in pendientes:
+        if anclar_lote(db, lote):
+            anclados += 1
+        elif lote.intentos_anclaje >= maximo:
+            lote.anclaje_estado = "fallido_definitivo"
+            db.commit()
+    return anclados
+
+
+def agregar_evento(db: Session, lote: Lote, datos) -> Evento:
+    """Añade un evento encadenado al último eslabón (HU-28).
+
+    El primer evento encadena con ``hash_sha256`` del lote; los siguientes, con
+    el hash del evento anterior. ``datos`` es un ``EventoIn``.
+    """
+    anteriores = list(lote.eventos)
+    ultimo = anteriores[-1] if anteriores else None
+    hash_anterior = (
+        ultimo.hash_evento
+        if ultimo is not None and ultimo.hash_evento
+        else lote.hash_sha256
+    )
+    evento = Evento(**datos.model_dump(), hash_evento_anterior=hash_anterior)
+    evento.hash_evento = hash_evento(
+        hash_anterior, evento.tipo, evento.fecha, evento.descripcion
+    )
+    lote.eventos.append(evento)
+    db.commit()
+    db.refresh(lote)
+    return evento

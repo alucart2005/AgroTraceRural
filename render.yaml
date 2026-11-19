@@ -70,3 +70,39 @@ services:
       # vercel.json porque Vercel no interpola variables de entorno allí.
       - key: FRONTEND_URL
         value: https://frontend-2mx1.vercel.app
+
+  # Job de reintento del ancla (HU-25). Toma los lotes pendientes/fallidos y
+  # los ancla con un tope de intentos; el servicio web nunca espera a Horizon.
+  - type: cron
+    name: agrotrace-reintentar-anclajes
+    runtime: docker
+    rootDir: backend
+    plan: free
+    region: oregon
+    schedule: "*/10 * * * *"
+    dockerCommand: python -m scripts.reintentar_anclajes
+    envVars:
+      - fromService:
+          type: web
+          name: agrotrace-backend
+          envVarKey: DATABASE_URL
+      - fromService:
+          type: web
+          name: agrotrace-backend
+          envVarKey: STELLAR_NETWORK
+      - fromService:
+          type: web
+          name: agrotrace-backend
+          envVarKey: HORIZON_URL
+      - fromService:
+          type: web
+          name: agrotrace-backend
+          envVarKey: STELLAR_PUBLIC_KEY
+      - fromService:
+          type: web
+          name: agrotrace-backend
+          envVarKey: STELLAR_SECRET_KEY
+      - key: ANCLAJE_REINTENTOS_MAX
+        value: "5"
+      - key: ANCLAJE_LOTE_POR_PASADA
+        value: "20"

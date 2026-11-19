@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Lote } from "@/lib/types";
 import { obtenerLote } from "@/lib/api";
+import AvisoAnclaje from "@/components/EstadoAnclaje";
 import EtiquetaLote from "@/components/EtiquetaLote";
 
 /** Etiquetas por hoja carta al imprimir: cuadrícula 2×3 (ver
@@ -75,6 +76,10 @@ export default function EtiquetaPage({
             </Link>
           </div>
         </div>
+
+        {/* HU-24: no imprimir la etiqueta como si el ancla ya estuviera:
+            el aviso explica que el lote existe pero aún no es verificable. */}
+        <AvisoAnclaje lote={lote} />
 
         {/* Vista previa en pantalla: una etiqueta grande con su URL. */}
         <EtiquetaLote
