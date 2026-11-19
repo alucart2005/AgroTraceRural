@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { Lote } from "@/lib/types";
 import { LINEAS_PRODUCTIVAS } from "@/lib/types";
 import { leerSesion } from "@/lib/auth";
@@ -18,9 +19,15 @@ import {
 
 export default function NuevoLotePage() {
   // HU-06/HU-08: sin sesión (o sin perfil completo) no se llega al formulario.
+  // Suspense: ``useSearchParams`` (línea preseleccionada desde el catálogo)
+  // obliga a envolver el wizard si la ruta se prerenderiza.
   return (
     <ProtegerProductor>
-      <WizardLote />
+      <Suspense
+        fallback={<p className="text-sm text-emerald-900/60">Cargando formulario…</p>}
+      >
+        <WizardLote />
+      </Suspense>
     </ProtegerProductor>
   );
 }
@@ -143,6 +150,25 @@ function WizardLote() {
     () => new Date().toISOString().slice(0, 10)
   );
   const [linea, setLinea] = useState(LINEAS_PRODUCTIVAS[0]);
+  // El catálogo enlaza con ``?linea=<nombre>``. Si esa línea ya no existe en
+  // el catálogo (p. ej. valores heredados como "Movilidad 1"), se avisa en vez
+  // de crear el lote con un producto equivocado en silencio.
+  const [lineaFueraDeCatalogo, setLineaFueraDeCatalogo] = useState<string | null>(
+    null
+  );
+  const params = useSearchParams();
+
+  useEffect(() => {
+    const sugerida = params.get("linea");
+    if (!sugerida) return;
+    if (LINEAS_PRODUCTIVAS.includes(sugerida)) {
+      setLinea(sugerida);
+      setLineaFueraDeCatalogo(null);
+    } else {
+      setLineaFueraDeCatalogo(sugerida);
+    }
+  }, [params]);
+
   const [cantidad, setCantidad] = useState(10);
   const [unidad, setUnidad] = useState("cubetas");
   const [evidencias, setEvidencias] = useState<EvidenciaLocal[]>([]);
@@ -359,6 +385,15 @@ function WizardLote() {
                     <option key={l}>{l}</option>
                   ))}
                 </select>
+                {lineaFueraDeCatalogo && (
+                  <p
+                    role="status"
+                    className="mt-1 text-xs font-medium text-amber-800"
+                  >
+                    “{lineaFueraDeCatalogo}” no está en el catálogo actual; elige
+                    un producto de la lista.
+                  </p>
+                )}
               </div>
 
               <div>

@@ -229,7 +229,7 @@ function CatalogoProductos() {
                         Última cosecha: {linea.ultimaCosecha || "—"}
                       </p>
                       <Link
-                        href="/productor/nuevo"
+                        href={`/productor/nuevo?linea=${encodeURIComponent(linea.linea)}`}
                         className="mt-2 inline-flex text-xs font-semibold text-emerald-700 underline"
                       >
                         Registrar lote de esta línea
