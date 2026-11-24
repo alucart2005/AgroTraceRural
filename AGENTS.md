@@ -21,7 +21,7 @@ Backend (`backend/`, ejecutar desde ahí para que resuelvan los imports `app.*`)
 - `uvicorn app.main:app --reload` — API en :8000
 - `alembic upgrade head` — migra la base configurada en `DATABASE_URL`
 - `python -m scripts.anchor_demo` — ancla y verifica de verdad en Testnet (necesita `STELLAR_SECRET_KEY`; crea una transacción real)
-- `python -m scripts.reintentar_anclajes` — una pasada del job de reintento del ancla (HU-25); el cron de Render lo ejecuta cada 10 min
+- `python -m scripts.reintentar_anclajes` — una pasada manual del job de reintento del ancla (HU-25); **no hay cron**: el plan free de Render no admite `cron_job` y se decidió no automatizarlo
 - `python -m scripts.migrar_sqlite_a_neon` — copia lotes del SQLite local a Neon y revalida los hashes
 - `python -m scripts.stellar_account create|show`
 - Requiere Python ≥3.10 (PEP 604 `X | None`); el Dockerfile usa 3.11.
@@ -154,10 +154,11 @@ memo (Horizon lo devuelve en base64) y lo compara; captura `NotFoundError` y
 El ancla **no bloquea la existencia del registro ni la respuesta**: `POST
 /api/lotes` responde 201 y encola `anclar_por_id` con `BackgroundTasks`; el lote
 nace con `anclaje_estado = "pendiente"`. Si Horizon falla queda `fallido` (con
-`anclaje_error`) y el cron `agrotrace-reintentar-anclajes`
-(`python -m scripts.reintentar_anclajes`, cada 10 min) reintenta hasta
-`ANCLAJE_REINTENTOS_MAX`, tras lo cual pasa a `fallido_definitivo`. El productor
-también puede forzarlo con `POST /api/lotes/{codigo}/anclar` (solo el dueño).
+`anclaje_error`). **No hay reintento automático** (decisión HU-25): el plan free
+de Render rechaza los `cron_job`, así que solo reintenta el dueño con
+`POST /api/lotes/{codigo}/anclar` o alguien que corra a mano
+`python -m scripts.reintentar_anclajes` (esa pasada aplica el tope
+`ANCLAJE_REINTENTOS_MAX` y pasa los lotes agotados a `fallido_definitivo`).
 `anclar_lote` es idempotente: un lote con `stellar_tx_hash` no genera otra
 transacción.
 

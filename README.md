@@ -384,7 +384,7 @@ uvicorn app.main:app --reload # abre http://localhost:8000/docs (Swagger)
 
 - **Base de datos:** si `DATABASE_URL` está vacía se usa **SQLite local** (`agrotrace_local.db`, ignorado por git). En producción va la URL de **Neon**; en Render usa el *pooler* (el que termina en `-pooler`). Migraciones: `alembic upgrade head`.
 - **Pruebas:** `python -m pytest -q` → **88 tests** con R2 y Stellar simulados (sin red, sin base de datos externa).
-- **Stellar (opcional):** `python -m scripts.stellar_account create` genera y fondea la cuenta de Testnet; `python -m scripts.anchor_demo` ancla y verifica de verdad (crea una transacción real); `python -m scripts.reintentar_anclajes` corre una pasada del job de reintento del ancla (el cron de Render lo ejecuta cada 10 min).
+- **Stellar (opcional):** `python -m scripts.stellar_account create` genera y fondea la cuenta de Testnet; `python -m scripts.anchor_demo` ancla y verifica de verdad (crea una transacción real); `python -m scripts.reintentar_anclajes` corre una pasada manual del job de reintento del ancla (no hay cron: el plan free de Render no admite `cron_job`).
 
 #### 3) API
 
@@ -403,7 +403,7 @@ uvicorn app.main:app --reload # abre http://localhost:8000/docs (Swagger)
 
 Las lecturas quedan abiertas para que el QR del consumidor funcione sin credenciales. El registro de lotes y las escrituras sobre un lote exigen la **sesión del productor** (JWT tras el ingreso con Google); la `X-API-Key` solo abre escrituras internas sin usuario detrás.
 
-**Entregas 6–8 (HU-24..HU-31):** el ancla se registra en segundo plano (el `201` no espera a Horizon; un cron reintenta cada 10 min con tope de 5 intentos) y la interfaz muestra su estado con opción de reintento manual; cada evento encadena el hash del anterior (`hash_evento`) y la verificación exige hash + ancla + cadena intacta; los listados soportan paginación (`X-Total-Count`) y hay límites anti-abuso (cuerpo ≤ 8 MB → `413`; tasa por IP → `429` con `Retry-After`).
+**Entregas 6–8 (HU-24..HU-31):** el ancla se registra en segundo plano (el `201` no espera a Horizon) y la interfaz muestra su estado con reintento manual vía botón — no hay cron de reintentos (decisión sobre el plan free de Render), cada evento encadena el hash del anterior (`hash_evento`) y la verificación exige hash + ancla + cadena intacta; los listados soportan paginación (`X-Total-Count`) y hay límites anti-abuso (cuerpo ≤ 8 MB → `413`; tasa por IP → `429` con `Retry-After`).
 
 #### 4) Despliegue
 
@@ -789,7 +789,7 @@ uvicorn app.main:app --reload # open http://localhost:8000/docs (Swagger)
 
 - **Database:** with an empty `DATABASE_URL` a **local SQLite** is used (`agrotrace_local.db`, git-ignored). In production it points to **Neon**; on Render use the *pooler* URL (the one ending in `-pooler`). Migrations: `alembic upgrade head`.
 - **Tests:** `python -m pytest -q` → **88 tests** with mocked R2 and Stellar (no network, no external database).
-- **Stellar (optional):** `python -m scripts.stellar_account create` generates and funds the Testnet account; `python -m scripts.anchor_demo` anchors and verifies for real (creates a live transaction); `python -m scripts.reintentar_anclajes` runs one pass of the anchor retry job (the Render cron runs it every 10 min).
+- **Stellar (optional):** `python -m scripts.stellar_account create` generates and funds the Testnet account; `python -m scripts.anchor_demo` anchors and verifies for real (creates a live transaction); `python -m scripts.reintentar_anclajes` runs one manual pass of the anchor retry job (there is no cron: Render's free plan rejects `cron_job`).
 
 #### 3) API
 
@@ -808,7 +808,7 @@ uvicorn app.main:app --reload # open http://localhost:8000/docs (Swagger)
 
 Reads stay open so the consumer QR works without credentials. Batch registration and writes on a batch require the **producer session** (JWT after Google sign-in); the `X-API-Key` only opens internal writes with no user behind them.
 
-**Deliveries 6–8 (HU-24..HU-31):** the anchor is recorded in the background (the `201` does not wait for Horizon; a cron retries every 10 min with a cap of 5 attempts) and the UI shows its state with a manual retry; every event chains the previous one's hash (`hash_evento`) and verification requires hash + anchor + intact chain; listings support pagination (`X-Total-Count`) and abuse limits are in place (body ≤ 8 MB → `413`; per-IP rate → `429` with `Retry-After`).
+**Deliveries 6–8 (HU-24..HU-31):** the anchor is recorded in the background (the `201` does not wait for Horizon) and the UI shows its state with a manual retry button — there is no retry cron (a deliberate decision given Render's free plan), every event chains the previous one's hash (`hash_evento`) and verification requires hash + anchor + intact chain; listings support pagination (`X-Total-Count`) and abuse limits are in place (body ≤ 8 MB → `413`; per-IP rate → `429` with `Retry-After`).
 
 #### 4) Deployment
 
@@ -1194,7 +1194,7 @@ uvicorn app.main:app --reload # abra http://localhost:8000/docs (Swagger)
 
 - **Banco de dados:** com `DATABASE_URL` vazio usa-se **SQLite local** (`agrotrace_local.db`, ignorado pelo git). Em produção aponta para **Neon**; no Render use a URL do *pooler* (a que termina em `-pooler`). Migrações: `alembic upgrade head`.
 - **Testes:** `python -m pytest -q` → **88 testes** com R2 e Stellar simulados (sem rede, sem banco externo).
-- **Stellar (opcional):** `python -m scripts.stellar_account create` gera e financia a conta de Testnet; `python -m scripts.anchor_demo` ancora e verifica de verdade (cria uma transação real); `python -m scripts.reintentar_anclajes` roda uma passada do job de reintento da âncora (o cron do Render o executa a cada 10 min).
+- **Stellar (opcional):** `python -m scripts.stellar_account create` gera e financia a conta de Testnet; `python -m scripts.anchor_demo` ancora e verifica de verdade (cria uma transação real); `python -m scripts.reintentar_anclajes` roda uma passagem manual do job de reintento da âncora (não há cron: o plano free do Render rejeita `cron_job`).
 
 #### 3) API
 
@@ -1213,7 +1213,7 @@ uvicorn app.main:app --reload # abra http://localhost:8000/docs (Swagger)
 
 As leituras ficam abertas para que o QR do consumidor funcione sem credenciais. O registro de lotes e as gravações sobre um lote exigem a **sessão do produtor** (JWT após o login com Google); a `X-API-Key` só abre gravações internas sem usuário por trás.
 
-**Entregas 6–8 (HU-24..HU-31):** a âncora é registrada em segundo plano (o `201` não espera o Horizon; um cron reintenta a cada 10 min com limite de 5 tentativas) e a interface mostra o estado com reintento manual; cada evento encadeia o hash do anterior (`hash_evento`) e a verificação exige hash + âncora + cadeia intacta; os listados suportam paginação (`X-Total-Count`) e há limites anti-abuso (corpo ≤ 8 MB → `413`; taxa por IP → `429` com `Retry-After`).
+**Entregas 6–8 (HU-24..HU-31):** a âncora é registrada em segundo plano (o `201` não espera o Horizon) e a interface mostra o estado com reintento manual por botão — não há cron de reintentos (decisão diante do plano free do Render), cada evento encadeia o hash do anterior (`hash_evento`) e a verificação exige hash + âncora + cadeia intacta; os listados suportam paginação (`X-Total-Count`) e há limites anti-abuso (corpo ≤ 8 MB → `413`; taxa por IP → `429` com `Retry-After`).
 
 #### 4) Implantação
 

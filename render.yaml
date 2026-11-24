@@ -71,38 +71,11 @@ services:
       - key: FRONTEND_URL
         value: https://frontend-2mx1.vercel.app
 
-  # Job de reintento del ancla (HU-25). Toma los lotes pendientes/fallidos y
-  # los ancla con un tope de intentos; el servicio web nunca espera a Horizon.
-  - type: cron
-    name: agrotrace-reintentar-anclajes
-    runtime: docker
-    rootDir: backend
-    plan: free
-    region: oregon
-    schedule: "*/10 * * * *"
-    dockerCommand: python -m scripts.reintentar_anclajes
-    envVars:
-      - fromService:
-          type: web
-          name: agrotrace-backend
-          envVarKey: DATABASE_URL
-      - fromService:
-          type: web
-          name: agrotrace-backend
-          envVarKey: STELLAR_NETWORK
-      - fromService:
-          type: web
-          name: agrotrace-backend
-          envVarKey: HORIZON_URL
-      - fromService:
-          type: web
-          name: agrotrace-backend
-          envVarKey: STELLAR_PUBLIC_KEY
-      - fromService:
-          type: web
-          name: agrotrace-backend
-          envVarKey: STELLAR_SECRET_KEY
-      - key: ANCLAJE_REINTENTOS_MAX
-        value: "5"
-      - key: ANCLAJE_LOTE_POR_PASADA
-        value: "20"
+  # Reintento del ancla (HU-25): SIN cron. El plan free de Render rechaza los
+  # `cron_job` ("invalid plan: free") y no se contrata un plan de pago ni se
+  # añade infraestructura externa para esto. El reintento es manual:
+  #   - el botón "Reintentar ancla" del dueño -> POST /api/lotes/{codigo}/anclar
+  #   - o una pasada puntual desde cualquier máquina:
+  #       python -m scripts.reintentar_anclajes
+  # El ancla inicial sigue encolándose en segundo plano al crear el lote
+  # (BackgroundTasks), así que un lote nuevo se ancla solo la primera vez.

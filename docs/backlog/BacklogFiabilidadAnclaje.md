@@ -63,15 +63,17 @@
 
 **Contexto técnico.** Se añaden a `Lote` los campos `anclaje_estado` (`pendiente|anclado|fallido|fallido_definitivo`), `anclaje_error`, `intentos_anclaje` y `ultimo_intento_at` (migración `0003_anclaje`). El reintento corre desde `scripts/reintentar_anclajes.py`, invocado por un cron de Render (o por una tarea del `lifespan`), para no depender del proceso web.
 
+> ⚖️ **Decisión de implementación (2026-11-24): reintento manual, sin cron.** El plan free de Render rechaza los `cron_job` (`invalid plan: free`) y no se contrata un plan de pago ni se añade infraestructura externa para esto. El ancla inicial sigue encolándose en segundo plano (`BackgroundTasks`), y los reintentos quedan en manos del botón **"Reintentar ancla"** del dueño (`POST /api/lotes/{codigo}/anclar`) o de una pasada a mano `python -m scripts.reintentar_anclajes` (que es la que aplica el tope `ANCLAJE_REINTENTOS_MAX` y marca `fallido_definitivo`). La entrada de cron se eliminó de `render.yaml`.
+
 #### 🧪 Criterios de aceptación (HU-25) — Dado / Cuando / Entonces
 
 - **Escenario 1: reintentos acotados.**
   - **Dado** que un ancla falla,
   - **Cuando** se reintenta,
-  - **Entonces** cada intento incrementa `intentos_anclaje` y actualiza `ultimo_intento_at`; la espera la marca el cron (una pasada cada 10 minutos), sin bloquear el request original.
+  - **Entonces** cada intento incrementa `intentos_anclaje` y actualiza `ultimo_intento_at`; la espera la marca quien ejecute la pasada manual (`python -m scripts.reintentar_anclajes`), sin bloquear el request original.
 - **Escenario 2: barrido periódico.**
   - **Dado** que existen lotes en `pendiente` o `fallido`,
-  - **Cuando** corre el job cada 10 minutos,
+  - **Cuando** corre el job (pasada manual; no hay cron, ver la decisión arriba),
   - **Entonces** procesa como máximo 20 lotes por pasada, en orden de antigüedad.
 - **Escenario 3: idempotencia.**
   - **Dado** que un lote ya está `anclado`,
@@ -120,7 +122,7 @@
 - [ ] Migración `0003_anclaje`: columnas `anclaje_estado`, `anclaje_error`, `intentos_anclaje`, `ultimo_intento_at` + índice por `anclaje_estado`.
 - [ ] `anclar_lote` deja de llamarse en línea; se encola con `BackgroundTasks` en `POST /api/lotes`.
 - [ ] Backfill: los lotes existentes con `stellar_tx_hash` pasan a `anclado` en la migración.
-- [ ] `scripts/reintentar_anclajes.py` + entrada de cron en `render.yaml`.
+- [x] `scripts/reintentar_anclajes.py` (paso manual; la entrada de cron de `render.yaml` se descartó por el plan free — ver la decisión de arriba).
 - [ ] `LoteOut.anclaje_estado` y `lib/types.ts` alineados.
 - [ ] Tests: 201 inmediato con Horizon lento, idempotencia, tope de 5 intentos, barrido del job.
 - [ ] Actualizar `.env.example`, `README.md` (flujo de trazabilidad) y `CHANGELOG.md`.
@@ -172,15 +174,17 @@
 
 **Technical context.** `Lote` gains `anclaje_estado` (`pendiente|anclado|fallido|fallido_definitivo`), `anclaje_error`, `intentos_anclaje` and `ultimo_intento_at` (migration `0003_anclaje`). Retries run from `scripts/reintentar_anclajes.py`, triggered by a Render cron (or a `lifespan` task), so they do not depend on the web process.
 
+> ⚖️ **Implementation decision (2026-11-24): manual retry, no cron.** Render's free plan rejects `cron_job` (`invalid plan: free`), and neither a paid plan nor extra infrastructure was taken on for this. The initial anchor is still queued in the background (`BackgroundTasks`), while retries rest with the owner's **"Reintentar ancla"** button (`POST /api/lotes/{codigo}/anclar`) or a manual `python -m scripts.reintentar_anclajes` pass (the one that enforces the `ANCLAJE_REINTENTOS_MAX` cap and marks `fallido_definitivo`). The cron entry was removed from `render.yaml`.
+
 #### 🧪 Acceptance criteria (HU-25) — Given / When / Then
 
 - **Scenario 1: bounded retries.**
   - **Given** an anchor fails,
   - **When** it is retried,
-  - **Then** `intentos_anclaje` increases and `ultimo_intento_at` is updated; the wait is set by the cron (one pass every 10 minutes), without blocking the original request.
+  - **Then** `intentos_anclaje` increases and `ultimo_intento_at` is updated; the wait is set by whoever runs the manual pass (`python -m scripts.reintentar_anclajes`), without blocking the original request.
 - **Scenario 2: periodic sweep.**
   - **Given** batches sit in `pendiente` or `fallido`,
-  - **When** the job runs every 10 minutes,
+  - **When** the job runs (manual pass; there is no cron, see the decision above),
   - **Then** it processes at most 20 batches per pass, oldest first.
 - **Scenario 3: idempotency.**
   - **Given** a batch is already `anclado`,
@@ -229,7 +233,7 @@
 - [ ] Migration `0003_anclaje`: `anclaje_estado`, `anclaje_error`, `intentos_anclaje`, `ultimo_intento_at` + index on `anclaje_estado`.
 - [ ] `anclar_lote` is no longer called inline; it is queued with `BackgroundTasks` in `POST /api/lotes`.
 - [ ] Backfill: existing batches with `stellar_tx_hash` become `anclado` in the migration.
-- [ ] `scripts/reintentar_anclajes.py` + cron entry in `render.yaml`.
+- [x] `scripts/reintentar_anclajes.py` (manual pass; the `render.yaml` cron entry was dropped under the free plan — see the decision above).
 - [ ] `LoteOut.anclaje_estado` and `lib/types.ts` kept in sync.
 - [ ] Tests: immediate 201 with a slow Horizon, idempotency, 5-attempt cap, job sweep.
 - [ ] Update `.env.example`, `README.md` (traceability flow) and `CHANGELOG.md`.
@@ -281,15 +285,17 @@
 
 **Contexto técnico.** `Lote` ganha `anclaje_estado` (`pendiente|anclado|fallido|fallido_definitivo`), `anclaje_error`, `intentos_anclaje` e `ultimo_intento_at` (migração `0003_anclaje`). O reintento roda em `scripts/reintentar_anclajes.py`, acionado por um cron do Render (ou por uma tarefa do `lifespan`), para não depender do processo web.
 
+> ⚖️ **Decisão de implementação (2026-11-24): reintento manual, sem cron.** O plano free do Render rejeita `cron_job` (`invalid plan: free`) e não foi contratado um plano pago nem adicionada infraestrutura externa para isso. A âncora inicial continua enfileirada em segundo plano (`BackgroundTasks`) e os reintentos ficam por conta do botão **"Reintentar ancla"** do dono (`POST /api/lotes/{codigo}/anclar`) ou de uma passagem manual `python -m scripts.reintentar_anclajes` (é ela que aplica o limite `ANCLAJE_REINTENTOS_MAX` e marca `fallido_definitivo`). A entrada de cron foi removida do `render.yaml`.
+
 #### 🧪 Critérios de aceitação (HU-25) — Dado / Quando / Então
 
 - **Cenário 1: reintentos limitados.**
   - **Dado** que uma ancoragem falha,
   - **Quando** é reintentada,
-  - **Então** `intentos_anclaje` aumenta e `ultimo_intento_at` é atualizado; a espera é marcada pelo cron (uma passada a cada 10 minutos), sem bloquear o request original.
+  - **Então** `intentos_anclaje` aumenta e `ultimo_intento_at` é atualizado; a espera é marcada por quem executar a passagem manual (`python -m scripts.reintentar_anclajes`), sem bloquear o request original.
 - **Cenário 2: varredura periódica.**
   - **Dado** que existem lotes em `pendiente` ou `fallido`,
-  - **Quando** o job roda a cada 10 minutos,
+  - **Quando** o job roda (passagem manual; não há cron, ver a decisão acima),
   - **Então** processa no máximo 20 lotes por passada, dos mais antigos aos mais novos.
 - **Cenário 3: idempotência.**
   - **Dado** que um lote já está `anclado`,
@@ -338,7 +344,7 @@
 - [ ] Migração `0003_anclaje`: `anclaje_estado`, `anclaje_error`, `intentos_anclaje`, `ultimo_intento_at` + índice por `anclaje_estado`.
 - [ ] `anclar_lote` deixa de ser chamado em linha; é enfileirado com `BackgroundTasks` em `POST /api/lotes`.
 - [ ] Backfill: lotes existentes com `stellar_tx_hash` passam a `anclado` na migração.
-- [ ] `scripts/reintentar_anclajes.py` + entrada de cron em `render.yaml`.
+- [x] `scripts/reintentar_anclajes.py` (passagem manual; a entrada de cron no `render.yaml` foi descartada pelo plano free — ver a decisão acima).
 - [ ] `LoteOut.anclaje_estado` e `lib/types.ts` alinhados.
 - [ ] Testes: 201 imediato com Horizon lento, idempotência, limite de 5 tentativas, varredura do job.
 - [ ] Atualizar `.env.example`, `README.md` (fluxo de rastreabilidade) e `CHANGELOG.md`.
