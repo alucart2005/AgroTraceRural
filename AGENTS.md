@@ -263,15 +263,16 @@ navegador: `NEXT_PUBLIC_API_KEY` es **pública**, no un secreto.
   `docs/semana2/KanbanBacklog.md`.
 - Producto piloto: huevos de Finca Guarumo, Cáceres (Antioquia). Código de
   lote `HUE-YYYY-NNN`, secuencial por año.
-- Las 31 historias viven en `docs/backlog/` — `IssuesListos.md` (HU-01..HU-05,
+- Las 32 historias viven en `docs/backlog/` — `IssuesListos.md` (HU-01..HU-05,
   español), `BacklogAuthGoogle.md` (HU-06..HU-08),
   `BacklogInfraProduccion.md` (HU-09..HU-13), `BacklogEstabilidadBackend.md`
   (HU-14..HU-15), `BacklogRedisenoVisual.md` (HU-16..HU-23),
   `BacklogFiabilidadAnclaje.md` (HU-24..HU-26),
-  `BacklogIntegridadCustodia.md` (HU-27..HU-28) y
-  `BacklogLecturaPublica.md` (HU-29..HU-31), las siete últimas trilingües — y
-  en GitHub Issues #1..#31. El tablero es el
+  `BacklogIntegridadCustodia.md` (HU-27..HU-28),
+  `BacklogLecturaPublica.md` (HU-29..HU-31) y
+  `BacklogCatalogoLineas.md` (HU-32), las ocho últimas trilingües — y
+  en GitHub Issues #1..#32. El tablero es el
   [proyecto #14](https://github.com/users/alucart2005/projects/14), con
-  roadmap de 8 entregas: las ocho implementadas (HU-01..HU-31; las entregas
-  6–8 quedaron cerradas el 2026-11-18) y `Priority`/`Size`/fechas reales por
-  historia.
+  roadmap de 9 entregas: las nueve implementadas (HU-01..HU-32; las entregas
+  6–8 quedaron cerradas el 2026-11-18 y la 9 el 2026-11-24) y
+  `Priority`/`Size`/fechas reales por historia.
