@@ -31,7 +31,7 @@ const ETIQUETA: Record<
     clase: "bg-amber-100 text-amber-900",
     detalle:
       "El lote está guardado, pero Stellar no confirmó el ancla. " +
-      "Se reintenta automáticamente cada 10 minutos.",
+      "Puedes reintentarlo con el botón «Reintentar ancla» de Mis lotes.",
   },
   fallido_definitivo: {
     texto: "Ancla no confirmada",
