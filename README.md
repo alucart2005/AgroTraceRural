@@ -352,7 +352,7 @@ La plataforma **no reemplaza** los registros oficiales: es una **capa tecnológi
 | Almacenamiento | Cloudflare R2 (evidencias **fuera** de la blockchain) |
 | Blockchain | Stellar Testnet — solo el SHA-256 viaja on-chain, como *Memo Hash* |
 | Despliegue | Vercel (frontend) · Render + Docker (backend) |
-| Pruebas | 88 tests pytest (R2 y Stellar simulados, sin red) |
+| Pruebas | 93 tests pytest (R2 y Stellar simulados, sin red) |
 
 #### 1) Frontend (`frontend/`)
 
@@ -383,7 +383,7 @@ uvicorn app.main:app --reload # abre http://localhost:8000/docs (Swagger)
 ```
 
 - **Base de datos:** si `DATABASE_URL` está vacía se usa **SQLite local** (`agrotrace_local.db`, ignorado por git). En producción va la URL de **Neon**; en Render usa el *pooler* (el que termina en `-pooler`). Migraciones: `alembic upgrade head`.
-- **Pruebas:** `python -m pytest -q` → **88 tests** con R2 y Stellar simulados (sin red, sin base de datos externa).
+- **Pruebas:** `python -m pytest -q` → **93 tests** con R2 y Stellar simulados (sin red, sin base de datos externa).
 - **Stellar (opcional):** `python -m scripts.stellar_account create` genera y fondea la cuenta de Testnet; `python -m scripts.anchor_demo` ancla y verifica de verdad (crea una transacción real); `python -m scripts.reintentar_anclajes` corre una pasada manual del job de reintento del ancla (no hay cron: el plan free de Render no admite `cron_job`).
 
 #### 3) API
@@ -757,7 +757,7 @@ The platform **does not replace** official records: it is a **complementary tech
 | Storage | Cloudflare R2 (evidence kept **off** the blockchain) |
 | Blockchain | Stellar Testnet — only the SHA-256 hash travels on-chain, as a *Memo Hash* |
 | Deployment | Vercel (frontend) · Render + Docker (backend) |
-| Testing | 88 pytest tests (mocked R2 and Stellar, no network) |
+| Testing | 93 pytest tests (mocked R2 and Stellar, no network) |
 
 #### 1) Frontend (`frontend/`)
 
@@ -788,7 +788,7 @@ uvicorn app.main:app --reload # open http://localhost:8000/docs (Swagger)
 ```
 
 - **Database:** with an empty `DATABASE_URL` a **local SQLite** is used (`agrotrace_local.db`, git-ignored). In production it points to **Neon**; on Render use the *pooler* URL (the one ending in `-pooler`). Migrations: `alembic upgrade head`.
-- **Tests:** `python -m pytest -q` → **88 tests** with mocked R2 and Stellar (no network, no external database).
+- **Tests:** `python -m pytest -q` → **93 tests** with mocked R2 and Stellar (no network, no external database).
 - **Stellar (optional):** `python -m scripts.stellar_account create` generates and funds the Testnet account; `python -m scripts.anchor_demo` anchors and verifies for real (creates a live transaction); `python -m scripts.reintentar_anclajes` runs one manual pass of the anchor retry job (there is no cron: Render's free plan rejects `cron_job`).
 
 #### 3) API
@@ -1162,7 +1162,7 @@ A plataforma **não substitui** os registros oficiais: é uma **camada tecnológ
 | Armazenamento | Cloudflare R2 (evidências **fora** da blockchain) |
 | Blockchain | Stellar Testnet — apenas o hash SHA-256 viaja on-chain, como *Memo Hash* |
 | Implantação | Vercel (frontend) · Render + Docker (backend) |
-| Testes | 88 testes pytest (R2 e Stellar simulados, sem rede) |
+| Testes | 93 testes pytest (R2 e Stellar simulados, sem rede) |
 
 #### 1) Frontend (`frontend/`)
 
@@ -1193,7 +1193,7 @@ uvicorn app.main:app --reload # abra http://localhost:8000/docs (Swagger)
 ```
 
 - **Banco de dados:** com `DATABASE_URL` vazio usa-se **SQLite local** (`agrotrace_local.db`, ignorado pelo git). Em produção aponta para **Neon**; no Render use a URL do *pooler* (a que termina em `-pooler`). Migrações: `alembic upgrade head`.
-- **Testes:** `python -m pytest -q` → **88 testes** com R2 e Stellar simulados (sem rede, sem banco externo).
+- **Testes:** `python -m pytest -q` → **93 testes** com R2 e Stellar simulados (sem rede, sem banco externo).
 - **Stellar (opcional):** `python -m scripts.stellar_account create` gera e financia a conta de Testnet; `python -m scripts.anchor_demo` ancora e verifica de verdade (cria uma transação real); `python -m scripts.reintentar_anclajes` roda uma passagem manual do job de reintento da âncora (não há cron: o plano free do Render rejeita `cron_job`).
 
 #### 3) API

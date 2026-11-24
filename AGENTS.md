@@ -17,7 +17,7 @@ Frontend (`frontend/`):
 
 Backend (`backend/`, ejecutar desde ahí para que resuelvan los imports `app.*`):
 - Setup: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
-- `.venv/bin/python -m pytest -q` — **91 tests**, todos con R2 y Stellar simulados (sin red, sin BD; el ID token de Google se simula)
+- `.venv/bin/python -m pytest -q` — **93 tests**, todos con R2 y Stellar simulados (sin red, sin BD; el ID token de Google se simula)
 - `uvicorn app.main:app --reload` — API en :8000
 - `alembic upgrade head` — migra la base configurada en `DATABASE_URL`
 - `python -m scripts.anchor_demo` — ancla y verifica de verdad en Testnet (necesita `STELLAR_SECRET_KEY`; crea una transacción real)
@@ -127,6 +127,16 @@ SHA-256. El payload canónico son **exactamente 8 campos** (`CAMPOS_LOTE`):
 `codigo`, `fecha_cosecha`, `linea_productiva`, `cantidad`, `unidad`, `finca`,
 `municipio`, `evidencias`. `fecha_postura`, `fotos` (URLs de R2), hashes y
 transacción quedan FUERA a propósito.
+
+**Catálogo de líneas productivas (HU-32).** `linea_productiva` está dentro del
+hash, así que el backend valida el valor contra una lista fija,
+`LINEAS_PRODUCTIVAS` en `app/schemas.py`, que debe coincidir exactamente con la
+de `frontend/lib/types.ts` (`Huevos Guarumo`, `Pescado Tilapia`, `Frutales
+varios`). El `POST /api/lotes` responde **422** con cualquier otro valor
+(incluidas mayúsculas o espacios distintos): antes se podía colar un producto
+arbitrario y aparecía como una línea más en el catálogo público. La lista solo
+puede crecer con valores nuevos — los lotes ya anclados no se recalculan: hay
+que tocar los dos lados a la vez.
 
 La **cadena de custodia** (HU-28) usa otro hash, `hash_evento`: SHA-256 de
 `{anterior, tipo, fecha, descripcion}`. El primer evento encadena con

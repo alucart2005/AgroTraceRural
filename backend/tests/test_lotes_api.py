@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from app.core.config import settings
+from app.schemas import LINEAS_PRODUCTIVAS
 from app.services.sha256 import hash_lote
 from app.services.stellar import StellarError
 from app.services.storage import StorageError
@@ -340,6 +341,32 @@ def test_rechaza_campos_mas_largos_que_su_columna(client):
     assert (
         client.post("/api/lotes", json=payload_lote(linea_productiva="")).status_code == 422
     )
+
+
+def test_acepta_las_lineas_del_catalogo(client):
+    """HU-32: el backend acepta exactamente las líneas de ``LINEAS_PRODUCTIVAS``."""
+    for linea in LINEAS_PRODUCTIVAS:
+        res = client.post("/api/lotes", json=payload_lote(linea_productiva=linea))
+        assert res.status_code == 201, res.text
+        assert res.json()["linea_productiva"] == linea
+
+
+def test_rechaza_linea_fuera_del_catalogo(client):
+    """HU-32: un valor heredado o inventado no debe crear una línea fantasma."""
+    res = client.post(
+        "/api/lotes", json=payload_lote(linea_productiva="Movilidad 1")
+    )
+    assert res.status_code == 422
+    assert "catálogo" in res.text
+
+    # Espacios o mayúsculas distintas tampoco pasan: el valor entra en el hash.
+    for valor in ("huevos guarumo", " Huevos Guarumo", "Huevos  Guarumo"):
+        assert (
+            client.post(
+                "/api/lotes", json=payload_lote(linea_productiva=valor)
+            ).status_code
+            == 422
+        )
 
 
 def test_rechaza_descripcion_de_evento_demasiado_larga(client):

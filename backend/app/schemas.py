@@ -26,6 +26,17 @@ MAX_FECHA_EVENTO = 40
 
 TipoEvento = Literal["cosecha", "clasificacion", "empaque", "despacho"]
 
+# Catálogo fijo de líneas productivas (HU-32). Debe coincidir EXACTAMENTE con
+# ``LINEAS_PRODUCTIVAS`` de ``frontend/lib/types.ts``: el backend rechaza con
+# 422 cualquier otro valor. ``linea_productiva`` entra en el payload canónico
+# del hash, así que la lista solo puede crecer añadiendo valores nuevos; los
+# ya anclados no se tocan.
+LINEAS_PRODUCTIVAS: tuple[str, ...] = (
+    "Huevos Guarumo",
+    "Pescado Tilapia",
+    "Frutales varios",
+)
+
 
 class FotoIn(BaseModel):
     dataUrl: str = Field(min_length=16, description="data:<mime>;base64,...")
@@ -58,6 +69,22 @@ class LoteCreateIn(BaseModel):
             date.fromisoformat(value)
         except ValueError as exc:
             raise ValueError(f"Fecha inválida: {value}") from exc
+        return value
+
+    @field_validator("linea_productiva")
+    @classmethod
+    def _linea_en_catalogo(cls, value: str) -> str:
+        """HU-32: solo líneas del catálogo vigente, igual que el ``<select>``.
+
+        Sin esta comprobación un cliente podía crear lotes con productos
+        arbitrarios (p. ej. "Movilidad 1"), que luego aparecían como una línea
+        más en el catálogo público.
+        """
+        if value not in LINEAS_PRODUCTIVAS:
+            raise ValueError(
+                f"Línea productiva fuera del catálogo: {value!r}. "
+                f"Válidas: {', '.join(LINEAS_PRODUCTIVAS)}"
+            )
         return value
 
 
